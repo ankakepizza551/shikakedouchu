@@ -1,0 +1,17 @@
+{
+  "name": "sugoroku-online",
+  "version": "1.0.0",
+  "description": "仕掛けすごろく - オンラインマルチプレイヤーボードゲーム",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "npx nodemon server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  }
+}

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仕掛け道中</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ロビー -->
+  <div id="screen-lobby" class="screen active">
+    <div class="lobby-container">
+      <h1 class="game-title">🎲 仕掛け道中</h1>
+      <p class="game-subtitle">罠を仕込みながら進む、読み合いすごろく</p>
+      <div class="input-group">
+        <input type="text" id="player-name" placeholder="プレイヤー名（最大10文字）" maxlength="10" autocomplete="off">
+      </div>
+      <div class="size-selector">
+        <span class="size-label">マス数：</span>
+        <button class="size-btn" data-size="15">15マス</button>
+        <button class="size-btn active" data-size="20">20マス</button>
+        <button class="size-btn" data-size="30">30マス</button>
+      </div>
+      <div class="size-selector">
+        <span class="size-label">上限：</span>
+        <button class="round-btn" data-rounds="10">10R</button>
+        <button class="round-btn active" data-rounds="20">20R</button>
+        <button class="round-btn" data-rounds="30">30R</button>
+        <button class="round-btn" data-rounds="50">50R</button>
+      </div>
+      <button id="btn-create" class="btn btn-primary">ルームを作る</button>
+      <div class="divider">または</div>
+      <div class="join-group">
+        <input type="text" id="room-code-input" placeholder="XXXX" maxlength="4" autocomplete="off">
+        <button id="btn-join" class="btn btn-secondary">参加する</button>
+      </div>
+      <div class="room-list-section">
+        <div class="room-list-header">
+          <span class="room-list-title">公開ルーム</span>
+          <button id="btn-refresh-rooms" class="btn-refresh">🔄 更新</button>
+        </div>
+        <div id="room-list" class="room-list">
+          <div class="room-list-empty">接続中...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 待機室 -->
+  <div id="screen-waiting" class="screen">
+    <div class="waiting-container">
+      <h2>待機中</h2>
+      <div class="room-code-box">
+        ルームコード：<span id="room-code-display" class="room-code-text"></span>
+        <button id="btn-copy-code" class="btn-copy">コピー 📋</button>
+      </div>
+      <p class="room-code-hint">このコードを友達に教えてください</p>
+      <div id="waiting-players" class="waiting-players"></div>
+      <button id="btn-start" class="btn btn-primary" style="display:none">ゲーム開始！</button>
+      <p id="waiting-message" class="waiting-message"></p>
+    </div>
+  </div>
+
+  <!-- ゲーム画面 -->
+  <div id="screen-game" class="screen">
+    <div class="game-header">
+      <span id="phase-indicator" class="phase-indicator"></span>
+      <span id="round-indicator" class="round-indicator"></span>
+      <button id="btn-trap-guide" class="btn-trap-guide" title="仕掛け一覧">📖 一覧</button>
+    </div>
+
+    <div class="game-layout">
+      <div class="board-wrapper">
+        <div id="board" class="board"></div>
+      </div>
+
+      <div class="side-panel">
+        <div class="players-panel">
+          <div class="panel-title">プレイヤー</div>
+          <div id="players-list"></div>
+        </div>
+        <div class="log-panel">
+          <div class="panel-title">ゲームログ</div>
+          <div id="game-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="control-panel" class="control-panel"></div>
+  </div>
+
+  <!-- 通知オーバーレイ -->
+  <div id="notification" class="notification hidden"></div>
+
+  <!-- 仕掛け一覧モーダル -->
+  <div id="trap-guide-modal" class="trap-guide-modal hidden">
+    <div class="trap-guide-inner">
+      <div class="trap-guide-header">
+        <span class="trap-guide-title">📖 仕掛け一覧</span>
+        <button id="btn-close-guide" class="btn-close-guide">✕</button>
+      </div>
+      <div id="trap-guide-list" class="trap-guide-list"></div>
+    </div>
+  </div>
+
+  <!-- サウンドトグル -->
+  <button id="btn-sound" class="btn-sound" title="サウンドON/OFF">🔊</button>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
