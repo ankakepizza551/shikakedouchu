@@ -11,20 +11,426 @@ const TRAP_DEFS = [
   { type: 'random',     emoji: '❓', name: 'ランダム',    desc: '効果は発動まで謎！' },
   { type: 'wander',     emoji: '🌀', name: 'ランダム移動', desc: '±1〜2マスランダム' },
   { type: 'gather',     emoji: '📣', name: '全員集合',    desc: '射程内の全員が設置者のマスへ' },
+  { type: 'fireworks',  emoji: '🎆', name: '大筒花火',    desc: '発動マスと隣接マスの全員を巻き込み後退' },
 ];
+
+// ========= Board Layouts =========
+const BOARD_LAYOUTS = {
+  15: {
+    maxNode: 15,
+    nodes: [
+      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
+      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
+      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
+      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
+      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5A', '5B', '5C'] },
+      // Route A (桜 - 6 steps to 11)
+      { id: '5A', label: '5上', row: 0, col: 4, type: 'route-a', next: ['6A'] },
+      { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
+      { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
+      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
+      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
+      { id: '10A', label: '10上', row: 1, col: 8, type: 'route-a', next: ['11'] },
+      // Route B (竹 - 5 steps to 11)
+      { id: '5B', label: '5中', row: 1, col: 5, type: 'route-b', next: ['6B'] },
+      { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },
+      { id: '7B', label: '7中', row: 1, col: 7, type: 'route-b', next: ['8B'] },
+      { id: '8B', label: '8中', row: 2, col: 6, type: 'route-b', next: ['11'] },
+      // Route C (藤 - 4 steps to 11)
+      { id: '5C', label: '5下', row: 2, col: 4, type: 'route-c', next: ['6C'] },
+      { id: '6C', label: '6下', row: 2, col: 5, type: 'route-c', next: ['7C'] },
+      { id: '7C', label: '7下', row: 3, col: 6, type: 'route-c', next: ['11'] },
+      // Common End
+      { id: '11', label: '11', row: 2, col: 7, type: 'common', next: ['12'] },
+      { id: '12', label: '12', row: 2, col: 8, type: 'common', next: ['13'] },
+      { id: '13', label: '13', row: 3, col: 8, type: 'common', next: ['14'] },
+      { id: '14', label: '14', row: 3, col: 7, type: 'common', next: ['15'] },
+      { id: '15', label: '終', row: 3, col: 5, type: 'common', next: [] },
+    ]
+  },
+  20: {
+    maxNode: 20,
+    nodes: [
+      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
+      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
+      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
+      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
+      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5'] },
+      { id: '5', label: '5', row: 1, col: 5, type: 'common', next: ['6A', '6B', '6C'] },
+      // Route A (桜 - 8 steps to 13)
+      { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
+      { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
+      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
+      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
+      { id: '10A', label: '10上', row: 0, col: 9, type: 'route-a', next: ['11A'] },
+      { id: '11A', label: '11上', row: 0, col: 10, type: 'route-a', next: ['12A'] },
+      { id: '12A', label: '12上', row: 1, col: 10, type: 'route-a', next: ['13'] },
+      // Route B (竹 - 6 steps to 13)
+      { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },
+      { id: '7B', label: '7中', row: 1, col: 7, type: 'route-b', next: ['8B'] },
+      { id: '8B', label: '8中', row: 1, col: 8, type: 'route-b', next: ['9B'] },
+      { id: '9B', label: '9中', row: 1, col: 9, type: 'route-b', next: ['10B'] },
+      { id: '10B', label: '10中', row: 2, col: 8, type: 'route-b', next: ['13'] },
+      // Route C (藤 - 5 steps to 13)
+      { id: '6C', label: '6下', row: 2, col: 5, type: 'route-c', next: ['7C'] },
+      { id: '7C', label: '7下', row: 2, col: 6, type: 'route-c', next: ['8C'] },
+      { id: '8C', label: '8下', row: 2, col: 7, type: 'route-c', next: ['9C'] },
+      { id: '9C', label: '9下', row: 3, col: 8, type: 'route-c', next: ['13'] },
+      // Common End
+      { id: '13', label: '13', row: 2, col: 9, type: 'common', next: ['14'] },
+      { id: '14', label: '14', row: 2, col: 10, type: 'common', next: ['15'] },
+      { id: '15', label: '15', row: 3, col: 10, type: 'common', next: ['16'] },
+      { id: '16', label: '16', row: 4, col: 10, type: 'common', next: ['17'] },
+      { id: '17', label: '17', row: 4, col: 9, type: 'common', next: ['18'] },
+      { id: '18', label: '18', row: 4, col: 8, type: 'common', next: ['19'] },
+      { id: '19', label: '19', row: 4, col: 7, type: 'common', next: ['20'] },
+      { id: '20', label: '終', row: 3, col: 7, type: 'common', next: [] },
+    ]
+  },
+  30: {
+    maxNode: 30,
+    nodes: [
+      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
+      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
+      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
+      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
+      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5'] },
+      { id: '5', label: '5', row: 1, col: 5, type: 'common', next: ['6'] },
+      { id: '6', label: '6', row: 1, col: 6, type: 'common', next: ['7'] },
+      { id: '7', label: '7', row: 1, col: 7, type: 'common', next: ['8A', '8B', '8C'] },
+      // Route A (桜 - 11 steps to 18)
+      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
+      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
+      { id: '10A', label: '10上', row: 0, col: 9, type: 'route-a', next: ['11A'] },
+      { id: '11A', label: '11上', row: 0, col: 10, type: 'route-a', next: ['12A'] },
+      { id: '12A', label: '12上', row: 0, col: 11, type: 'route-a', next: ['13A'] },
+      { id: '13A', label: '13上', row: 1, col: 11, type: 'route-a', next: ['14A'] },
+      { id: '14A', label: '14上', row: 2, col: 11, type: 'route-a', next: ['15A'] },
+      { id: '15A', label: '15上', row: 3, col: 11, type: 'route-a', next: ['16A'] },
+      { id: '16A', label: '16上', row: 4, col: 11, type: 'route-a', next: ['17A'] },
+      { id: '17A', label: '17上', row: 4, col: 10, type: 'route-a', next: ['18'] },
+      // Route B (竹 - 8 steps to 18)
+      { id: '8B', label: '8中', row: 1, col: 8, type: 'route-b', next: ['9B'] },
+      { id: '9B', label: '9中', row: 1, col: 9, type: 'route-b', next: ['10B'] },
+      { id: '10B', label: '10中', row: 1, col: 10, type: 'route-b', next: ['11B'] },
+      { id: '11B', label: '11中', row: 2, col: 10, type: 'route-b', next: ['12B'] },
+      { id: '12B', label: '12中', row: 3, col: 10, type: 'route-b', next: ['13B'] },
+      { id: '13B', label: '13中', row: 3, col: 9, type: 'route-b', next: ['14B'] },
+      { id: '14B', label: '14中', row: 3, col: 8, type: 'route-b', next: ['18'] },
+      // Route C (藤 - 6 steps to 18)
+      { id: '8C', label: '8下', row: 2, col: 7, type: 'route-c', next: ['9C'] },
+      { id: '9C', label: '9下', row: 2, col: 6, type: 'route-c', next: ['10C'] },
+      { id: '10C', label: '10下', row: 3, col: 6, type: 'route-c', next: ['11C'] },
+      { id: '11C', label: '11下', row: 4, col: 6, type: 'route-c', next: ['12C'] },
+      { id: '12C', label: '12下', row: 4, col: 7, type: 'route-c', next: ['18'] },
+      // Common End
+      { id: '18', label: '18', row: 4, col: 8, type: 'common', next: ['19'] },
+      { id: '19', label: '19', row: 4, col: 9, type: 'common', next: ['20'] },
+      { id: '20', label: '20', row: 5, col: 9, type: 'common', next: ['21'] },
+      { id: '21', label: '21', row: 5, col: 8, type: 'common', next: ['22'] },
+      { id: '22', label: '22', row: 5, col: 7, type: 'common', next: ['23'] },
+      { id: '23', label: '23', row: 5, col: 6, type: 'common', next: ['24'] },
+      { id: '24', label: '24', row: 5, col: 5, type: 'common', next: ['25'] },
+      { id: '25', label: '25', row: 5, col: 4, type: 'common', next: ['26'] },
+      { id: '26', label: '26', row: 5, col: 3, type: 'common', next: ['27'] },
+      { id: '27', label: '27', row: 5, col: 2, type: 'common', next: ['28'] },
+      { id: '28', label: '28', row: 5, col: 1, type: 'common', next: ['29'] },
+      { id: '29', label: '29', row: 5, col: 0, type: 'common', next: ['30'] },
+      { id: '30', label: '終', row: 4, col: 0, type: 'common', next: [] },
+    ]
+  }
+};
+
+function findPath(fromNodeId, toNodeId, boardSize) {
+  const layout = BOARD_LAYOUTS[boardSize];
+  if (!layout) return [];
+  const adj = {};
+  
+  for (const node of layout.nodes) {
+    adj[node.id] = adj[node.id] || [];
+    if (node.next) {
+      for (const nxt of node.next) {
+        adj[node.id].push(nxt);
+        adj[nxt] = adj[nxt] || [];
+        adj[nxt].push(node.id);
+      }
+    }
+  }
+  
+  const queue = [[fromNodeId]];
+  const visited = new Set([fromNodeId]);
+  
+  while (queue.length > 0) {
+    const path = queue.shift();
+    const node = path[path.length - 1];
+    if (node === toNodeId) return path;
+    
+    const neighbors = adj[node] || [];
+    for (const neighbor of neighbors) {
+      if (!visited.has(neighbor)) {
+        visited.add(neighbor);
+        queue.push([...path, neighbor]);
+      }
+    }
+  }
+  return [];
+}
+
+function moveForward(fromNodeId, steps, preferredBranch, boardSize) {
+  let current = fromNodeId;
+  const layout = BOARD_LAYOUTS[boardSize];
+  if (!layout) return current;
+  
+  for (let s = 0; s < steps; s++) {
+    const node = layout.nodes.find(n => n.id === current);
+    if (!node || !node.next || node.next.length === 0) break;
+    
+    if (node.next.length === 1) {
+      current = node.next[0];
+    } else {
+      const pref = preferredBranch === 'C' ? 'C' : (preferredBranch === 'A' ? 'A' : 'B');
+      current = node.next.find(n => n.endsWith(pref)) || node.next[0];
+    }
+  }
+  return current;
+}
 
 const state = {
   myId: null,
   room: null,
   selectedBoardSize: 20,
   selectedMaxRounds: 20,
+  isPrivate: false,
   isAnimating: false,
+  selectedTrapType: null,
 };
 
 let pendingRoomUpdate = null;
 let roomListInterval = null;
+let chatMessages = [];
+let chatToastTimer = null;
+
+// 招待リンクのURLパラメータを検出
+(function () {
+  const code = new URLSearchParams(location.search).get('room');
+  if (code) {
+    document.getElementById('room-code-input').value = code.toUpperCase().slice(0, 4);
+    document.getElementById('player-name').focus();
+    history.replaceState(null, '', '/');
+  }
+})();
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function getTraditionalFace(num) {
+  const kanji = ['', '一', '二', '三', '四', '五', '六'];
+  return kanji[num] || '';
+}
+
+function playDiceRollAnimation(diceResult, rollerName) {
+  return new Promise(async resolve => {
+    const overlay = document.getElementById('dice-anim-overlay');
+    if (!overlay) return resolve();
+
+    // Show overlay
+    overlay.classList.remove('hidden');
+    
+    const cupWrap = overlay.querySelector('.dice-cup-wrap');
+    const tray = overlay.querySelector('#dice-tray');
+    
+    // Reset cup and tray
+    cupWrap.className = 'dice-cup-wrap shake';
+    tray.innerHTML = '';
+
+    // Play shake sound
+    SFX.diceRoll();
+    await sleep(900);
+
+    // Show name roll announcement in overlay
+    const title = document.createElement('div');
+    title.className = 'dice-roll-announcement';
+    title.style.cssText = 'position:absolute;top:30px;color:#c9a84c;font-family:"Shippori Mincho",serif;font-size:1.2rem;font-weight:bold;text-shadow:0 2px 4px #000;z-index:1020;';
+    title.textContent = `【${rollerName} の勝負】`;
+    overlay.querySelector('.dice-anim-content').appendChild(title);
+
+    // Rollout cup
+    cupWrap.classList.remove('shake');
+    cupWrap.classList.add('rollout');
+
+    // Roll dice
+    SFX.diceLand(diceResult);
+    const dice = document.createElement('div');
+    dice.className = `wood-dice face-${diceResult} roll`;
+    dice.innerHTML = `<span class="wood-dice-face">${getTraditionalFace(diceResult)}</span>`;
+    tray.appendChild(dice);
+
+    await sleep(1500); // Watch dice for 1.5s
+
+    // Hide overlay and clean up
+    overlay.classList.add('hidden');
+    title.remove();
+    resolve();
+  });
+}
+
+function createInkSplash(nodeId) {
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
+  const cell = boardEl.querySelector(`.board-cell[data-id="${nodeId}"]`);
+  if (!cell) return;
+
+  // Get or create overlay container
+  let container = boardEl.parentElement.querySelector('.ink-splash-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'ink-splash-container';
+    boardEl.parentElement.appendChild(container);
+  }
+
+  // Get cell center relative to the board-container
+  const boardParent = boardEl.parentElement;
+  const containerRect = boardParent.getBoundingClientRect();
+  const cLeft = boardParent.clientLeft || 0;
+  const cTop = boardParent.clientTop || 0;
+  const cellRect = cell.getBoundingClientRect();
+  const cx = cellRect.left - containerRect.left - cLeft + cellRect.width / 2;
+  const cy = cellRect.top - containerRect.top - cTop + cellRect.height / 2;
+
+  // Create particles
+  const particleCount = 18;
+  for (let i = 0; i < particleCount; i++) {
+    const blot = document.createElement('div');
+    blot.className = 'ink-blot';
+    
+    blot.style.left = `${cx}px`;
+    blot.style.top = `${cy}px`;
+    
+    const size = Math.random() * 24 + 8;
+    blot.style.width = `${size}px`;
+    blot.style.height = `${size}px`;
+    
+    const angle = Math.random() * Math.PI * 2;
+    const distance = Math.random() * 70 + 30;
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+    const scale = Math.random() * 0.8 + 0.3;
+
+    blot.style.setProperty('--tx', `${tx}px`);
+    blot.style.setProperty('--ty', `${ty}px`);
+    blot.style.setProperty('--scale', scale);
+
+    container.appendChild(blot);
+    
+    blot.offsetHeight; // force reflow
+    blot.classList.add('burst');
+
+    setTimeout(() => {
+      blot.remove();
+      if (container.children.length === 0) {
+        container.remove();
+      }
+    }, 800);
+  }
+}
+
+function drawBoardPaths(room) {
+  const svg = document.getElementById('board-paths-overlay');
+  if (!svg) return;
+  svg.innerHTML = '';
+
+  const layout = BOARD_LAYOUTS[room.boardSize];
+  if (!layout) return;
+
+  const boardEl = document.getElementById('board');
+  if (!boardEl) return;
+
+  // Align SVG wrapper to the board elements size
+  svg.style.width = `${boardEl.scrollWidth}px`;
+  svg.style.height = `${boardEl.scrollHeight}px`;
+
+  const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+  defs.innerHTML = `
+    <marker id="arrow-common" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 7 5 L 0 8.5 z" class="path-arrow-common"/>
+    </marker>
+    <marker id="arrow-route-a" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 7 5 L 0 8.5 z" class="path-arrow-a"/>
+    </marker>
+    <marker id="arrow-route-b" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 7 5 L 0 8.5 z" class="path-arrow-b"/>
+    </marker>
+    <marker id="arrow-route-c" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 7 5 L 0 8.5 z" class="path-arrow-c"/>
+    </marker>
+  `;
+  svg.appendChild(defs);
+
+  const container = boardEl.parentElement;
+  const containerRect = container.getBoundingClientRect();
+  const cLeft = container.clientLeft || 0;
+  const cTop = container.clientTop || 0;
+
+  for (const node of layout.nodes) {
+    if (!node.next || node.next.length === 0) continue;
+
+    const fromCell = boardEl.querySelector(`.board-cell[data-id="${node.id}"]`);
+    if (!fromCell) continue;
+
+    const fromCellRect = fromCell.getBoundingClientRect();
+    const fromRect = {
+      x: fromCellRect.left - containerRect.left - cLeft + fromCellRect.width / 2,
+      y: fromCellRect.top - containerRect.top - cTop + fromCellRect.height / 2,
+    };
+
+    for (const nxtId of node.next) {
+      const toCell = boardEl.querySelector(`.board-cell[data-id="${nxtId}"]`);
+      if (!toCell) continue;
+
+      const toCellRect = toCell.getBoundingClientRect();
+      const toRect = {
+        x: toCellRect.left - containerRect.left - cLeft + toCellRect.width / 2,
+        y: toCellRect.top - containerRect.top - cTop + toCellRect.height / 2,
+      };
+
+      let routeClass = 'route-common';
+      let markerId = 'arrow-common';
+      if (node.type === 'route-a' || nxtId.endsWith('A')) {
+        routeClass = 'route-route-a';
+        markerId = 'arrow-route-a';
+      } else if (node.type === 'route-b' || nxtId.endsWith('B')) {
+        routeClass = 'route-route-b';
+        markerId = 'arrow-route-b';
+      } else if (node.type === 'route-c' || nxtId.endsWith('C')) {
+        routeClass = 'route-route-c';
+        markerId = 'arrow-route-c';
+      }
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      const dx = toRect.x - fromRect.x;
+      const dy = toRect.y - fromRect.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      
+      let d = `M ${fromRect.x} ${fromRect.y} L ${toRect.x} ${toRect.y}`;
+      if (node.next.length > 1) {
+        const mx = (fromRect.x + toRect.x) / 2;
+        const my = (fromRect.y + toRect.y) / 2;
+        let ox = -dy / dist * 14;
+        let oy = dx / dist * 14;
+        
+        if (nxtId.endsWith('A')) { ox = -dy/dist * 18; oy = dx/dist * 18; }
+        else if (nxtId.endsWith('C')) { ox = dy/dist * 18; oy = -dx/dist * 18; }
+
+        d = `M ${fromRect.x} ${fromRect.y} Q ${mx + ox} ${my + oy} ${toRect.x} ${toRect.y}`;
+      }
+
+      path.setAttribute('d', d);
+      path.setAttribute('class', `board-path-line ${routeClass}`);
+      path.setAttribute('marker-end', `url(#${markerId})`);
+
+      svg.appendChild(path);
+    }
+  }
+}
 
 // ========= Sound =========
 let _audioCtx = null;
@@ -73,6 +479,11 @@ const SFX = {
   goal() {
     [523, 659, 784, 1047].forEach((f, i) => tone(f, 'sine', 0.32, 0.45, i * 0.1));
   },
+  myTurn() {
+    tone(523, 'sine', 0.12, 0.35);
+    tone(659, 'sine', 0.12, 0.38, 0.11);
+    tone(784, 'sine', 0.18, 0.45, 0.22);
+  },
   trap(type) {
     const map = {
       pitfall:    () => { tone(300,'sawtooth',0.07,0.5); tone(200,'sawtooth',0.18,0.4,0.1); tone(130,'sawtooth',0.28,0.35,0.22); },
@@ -85,6 +496,13 @@ const SFX = {
       random:     () => { for (let i=0;i<7;i++) tone(200+Math.random()*700,'sine',0.09,0.28,i*0.06); },
       wander:     () => { [350,280,420,300].forEach((f,i)=>tone(f,'sine',0.1,0.32,i*0.08)); },
       gather:     () => { [400,480,560,640,560].forEach((f,i)=>tone(f,'sine',0.13,0.42,i*0.08)); },
+      fireworks:  () => {
+        tone(600, 'sawtooth', 0.2, 0.4);
+        tone(300, 'sawtooth', 0.3, 0.5, 0.05);
+        for (let i = 0; i < 5; i++) {
+          tone(1000 + Math.random() * 400, 'sine', 0.05, 0.15, 0.2 + i * 0.08);
+        }
+      },
     };
     (map[type] || (() => tone(440,'square',0.25,0.4)))();
   },
@@ -178,6 +596,11 @@ function renderRoomList(rooms) {
 // ========= Room Code Copy =========
 document.getElementById('btn-refresh-rooms').addEventListener('click', fetchRoomList);
 
+document.getElementById('btn-leave-waiting').addEventListener('click', () => {
+  localStorage.removeItem('sugoroku_token');
+  location.reload();
+});
+
 document.getElementById('btn-copy-code').addEventListener('click', () => {
   const code = document.getElementById('room-code-display').textContent.trim();
   if (!code) return;
@@ -186,6 +609,49 @@ document.getElementById('btn-copy-code').addEventListener('click', () => {
   }).catch(() => {
     showNotification('コピーできませんでした\nコード: ' + code, 2500);
   });
+});
+
+document.getElementById('btn-copy-invite').addEventListener('click', () => {
+  const code = document.getElementById('room-code-display').textContent.trim();
+  if (!code) return;
+  const url = `${location.origin}/?room=${code}`;
+  navigator.clipboard.writeText(url).then(() => {
+    showNotification('招待リンクをコピーしました！\nリンクを友達に送ってください', 2200);
+  }).catch(() => {
+    showNotification('招待リンク:\n' + url, 5000);
+  });
+});
+
+// ========= Chat =========
+function showChatToast(name, message, color) {
+  const el = document.getElementById('chat-toast');
+  if (!el) return;
+  el.innerHTML = `💬 <span style="color:${escHtml(color)};font-weight:bold">${escHtml(name)}</span>: ${escHtml(message)}`;
+  el.classList.remove('hidden');
+  clearTimeout(chatToastTimer);
+  chatToastTimer = setTimeout(() => el.classList.add('hidden'), 3000);
+}
+
+function renderChatLog() {
+  const el = document.getElementById('chat-log');
+  if (!el) return;
+  el.innerHTML = chatMessages.map(c =>
+    `<div class="chat-entry">💬 <span class="chat-name" style="color:${escHtml(c.color)}">${escHtml(c.name)}</span>: ${escHtml(c.message)}</div>`
+  ).join('');
+}
+
+function sendChat() {
+  const input = document.getElementById('chat-input');
+  if (!input) return;
+  const msg = input.value.trim();
+  if (!msg || !state.room) return;
+  socket.emit('chat', { message: msg });
+  input.value = '';
+}
+
+document.getElementById('btn-chat-send').addEventListener('click', sendChat);
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') sendChat();
 });
 
 // ========= Screen =========
@@ -211,11 +677,15 @@ document.querySelectorAll('.round-btn').forEach(btn => {
   });
 });
 
+document.getElementById('toggle-private').addEventListener('change', e => {
+  state.isPrivate = e.target.checked;
+});
+
 // ========= Lobby =========
 document.getElementById('btn-create').addEventListener('click', () => {
   const name = getPlayerName();
   if (!name) return;
-  socket.emit('create-room', { playerName: name, boardSize: state.selectedBoardSize, maxRounds: state.selectedMaxRounds }, ({ roomCode, room, error, reconnectToken }) => {
+  socket.emit('create-room', { playerName: name, boardSize: state.selectedBoardSize, maxRounds: state.selectedMaxRounds, isPrivate: state.isPrivate }, ({ roomCode, room, error, reconnectToken }) => {
     if (error) return showError(error);
     if (reconnectToken) localStorage.setItem('sugoroku_token', reconnectToken);
     stopRoomListRefresh();
@@ -308,13 +778,58 @@ socket.on('player-disconnected', ({ playerName }) => {
   showNotification(`⚠️ ${playerName} が切断しました\n90秒以内に再接続できます`, 6000);
 });
 
+let turnAnnouncementTimer = null;
+
+function showTurnAnnouncement(text, isMyTurn, duration = 2200) {
+  document.querySelectorAll('.turn-announcement').forEach(el => el.remove());
+  clearTimeout(turnAnnouncementTimer);
+  const el = document.createElement('div');
+  el.className = 'turn-announcement' + (isMyTurn ? ' is-my-turn' : '');
+  el.textContent = text;
+  document.body.appendChild(el);
+  turnAnnouncementTimer = setTimeout(() => {
+    el.classList.add('fade-out');
+    setTimeout(() => { if (el.parentNode) el.remove(); }, 400);
+  }, duration);
+}
+
 function applyRoomUpdate(room) {
+  const prev = state.room;
+
   // 自分のゴールを検出
-  if (state.room) {
-    const prev = state.room.players.find(p => p.id === state.myId);
-    const next = room.players.find(p => p.id === state.myId);
-    if (prev && next && !prev.finished && next.finished) SFX.goal();
+  if (prev) {
+    const prevMe = prev.players.find(p => p.id === state.myId);
+    const nextMe = room.players.find(p => p.id === state.myId);
+    if (prevMe && nextMe && !prevMe.finished && nextMe.finished) SFX.goal();
   }
+
+  // フェーズ・ターン変化アナウンス
+  if (prev) {
+    const ps = prev.status, ns = room.status;
+    // ゲーム開始
+    if (ps === 'lobby' && ns === 'placement') {
+      showTurnAnnouncement('🎲 ゲーム開始！', false, 2000);
+    }
+    // アクション→配置フェーズ
+    else if (ps === 'action' && ns === 'placement') {
+      showTurnAnnouncement(`🃏 第${room.round}回 配置フェーズ`, false, 1800);
+    }
+    // アクションターン変化
+    if (ns === 'action') {
+      const prevId = prev.currentActionPlayerId;
+      const nextId = room.currentActionPlayerId;
+      if (nextId && prevId !== nextId) {
+        if (nextId === state.myId) {
+          showTurnAnnouncement('🎲 あなたのターン！', true, 2500);
+          SFX.myTurn();
+        } else {
+          const p = room.players.find(q => q.id === nextId);
+          if (p) showTurnAnnouncement(`🎲 ${p.name} のターン`, false, 1800);
+        }
+      }
+    }
+  }
+
   state.room = room;
   const myPlayer = room.players.find(p => p.id === state.myId);
   const isMyTurn = myPlayer && !myPlayer.finished && (
@@ -331,9 +846,51 @@ function applyRoomUpdate(room) {
   }
 }
 
+// ========= 他プレイヤーのアクションアニメーション =========
+socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPos, trapResults }) => {
+  if (state.isAnimating || !state.room) return;
+  const roller = state.room.players.find(p => p.id === playerId);
+  if (!roller) return;
+
+  state.isAnimating = true;
+
+  if (skipped) {
+    SFX.skip();
+    showNotification(`💤 ${escHtml(roller.name)} はお休み`, 1500);
+    await sleep(700);
+  } else if (diceResult) {
+    // 他のプレイヤーのサイコロも筒アニメーションで演出
+    await playDiceRollAnimation(diceResult, roller.name);
+    if (toPos && toPos !== fromPos) {
+      await animatePlayerMove(playerId, fromPos, toPos, state.room);
+    }
+  }
+
+  if (trapResults && trapResults.length > 0) {
+    for (const r of trapResults) {
+      await animateTrapEffect(r, playerId);
+    }
+  }
+
+  state.isAnimating = false;
+
+  if (pendingRoomUpdate) {
+    const room = pendingRoomUpdate;
+    pendingRoomUpdate = null;
+    applyRoomUpdate(room);
+  }
+});
+
 socket.on('room-update', (room) => {
   if (state.isAnimating) { pendingRoomUpdate = room; return; }
   applyRoomUpdate(room);
+});
+
+socket.on('chat-message', ({ name, message, color }) => {
+  chatMessages.unshift({ name, message, color });
+  if (chatMessages.length > 15) chatMessages.length = 15;
+  renderChatLog();
+  showChatToast(name, message, color);
 });
 
 socket.on('kicked', ({ reason }) => {
@@ -382,49 +939,58 @@ function renderBoard(room) {
   boardEl.innerHTML = '';
 
   const bs = room.boardSize;
-  const rowSplit = Math.floor(bs / 2);      // row1: 0〜rowSplit, row2: rowSplit+1〜bs
-  const colCount = rowSplit + 1;
+  const layout = BOARD_LAYOUTS[bs];
+  if (!layout) return;
+
+  const colCount = Math.max(...layout.nodes.map(n => n.col)) + 1;
+  const rowCount = Math.max(...layout.nodes.map(n => n.row)) + 1;
+
   const { cellSize, rowHeight, gap } = calcCellLayout(colCount);
   boardEl.style.gridTemplateColumns = `repeat(${colCount}, ${cellSize}px)`;
-  boardEl.style.gridTemplateRows = `${rowHeight}px ${rowHeight}px`;
+  boardEl.style.gridTemplateRows = `repeat(${rowCount}, ${rowHeight}px)`;
   boardEl.style.gap = `${gap}px`;
 
   const isPlacement = room.status === 'placement' && !room.myPlacedThisRound;
   const myPlayer = room.players.find(p => p.id === state.myId);
-  const canPlace = isPlacement && myPlayer && !myPlayer.finished && room.myAssignedTrap;
-  const pRange = room.myPlacementRange;
 
-  for (let pos = 0; pos <= bs; pos++) {
+  for (const node of room.board) {
     const cell = document.createElement('div');
     cell.className = 'board-cell';
+    cell.dataset.id = node.square;
+    cell.style.gridRow = node.row + 1;
+    cell.style.gridColumn = node.col + 1;
 
-    // グリッド配置: row1=0〜rowSplit(左→右), row2=rowSplit+1〜bs(右→左)
-    const gridRow = pos <= rowSplit ? 1 : 2;
-    const gridCol = pos <= rowSplit ? pos + 1 : bs - pos + 1;
-    cell.style.gridRow = gridRow;
-    cell.style.gridColumn = gridCol;
+    // Deterministic hash based on node.square to assign stone shape/rotation class
+    const hash = String(node.square).split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const stoneType = (hash % 4) + 1;
+    cell.classList.add(`stone-${stoneType}`);
 
-    if (pos === 0) cell.classList.add('start');
-    else if (pos === bs) cell.classList.add('goal');
+    if (node.type) {
+      cell.classList.add(node.type);
+    }
+
+    if (node.square === '0') {
+      cell.classList.add('start');
+    } else if (node.square === String(room.boardSize)) {
+      cell.classList.add('goal');
+    }
 
     const label = document.createElement('div');
     label.className = 'cell-label';
-    label.textContent = pos === 0 ? 'S' : pos === bs ? 'G' : pos;
-    cell.title = pos === 0 ? 'スタート' : pos === bs ? 'ゴール' : `${pos}マス目`;
+    label.textContent = node.label;
     cell.appendChild(label);
 
     // 自分が置いた仕掛けのみ表示
-    const sq = room.board[pos];
-    if (sq && sq.myTrapCount > 0) {
+    if (node.myTrapCount > 0) {
       const trapDiv = document.createElement('div');
       trapDiv.className = 'trap-indicator my-trap';
-      trapDiv.textContent = '📌'.repeat(Math.min(sq.myTrapCount, 3));
-      trapDiv.title = `自分の仕掛け ${sq.myTrapCount}個`;
+      trapDiv.textContent = '📌'.repeat(Math.min(node.myTrapCount, 3));
+      trapDiv.title = `自分の仕掛け ${node.myTrapCount}個`;
       cell.appendChild(trapDiv);
     }
 
     // プレイヤートークン
-    const tokensHere = room.players.filter(p => p.finished ? pos === bs : p.position === pos);
+    const tokensHere = room.players.filter(p => p.finished ? node.square === String(room.boardSize) : p.position === node.square);
     if (tokensHere.length > 0) {
       const tokensDiv = document.createElement('div');
       tokensDiv.className = 'player-tokens';
@@ -439,22 +1005,38 @@ function renderBoard(room) {
       cell.appendChild(tokensDiv);
     }
 
-    // 配置クリック（自マス〜前方6マスのみ）
-    if (canPlace && pRange && pos >= pRange.min && pos <= pRange.max) {
+    // 配置クリック（スタート・ゴールを除く全マス）
+    const isStartOrGoal = (node.square === '0' || node.square === String(room.boardSize));
+    const isCardSelected = state.selectedTrapType !== null || room.myForcedTrapType !== null;
+    const canPlace = isPlacement && myPlayer && !myPlayer.finished && !isStartOrGoal && isCardSelected;
+
+    if (canPlace) {
       cell.classList.add('placeable');
-      cell.addEventListener('click', () => doPlaceTrap(pos));
+      cell.addEventListener('click', () => doPlaceTrap(node.square));
     }
 
     boardEl.appendChild(cell);
   }
+  // 街道接続線を再描画 ＆ モバイル縮小フィット
+  setTimeout(() => {
+    resetBoardScale();
+    drawBoardPaths(room);
+    adjustBoardScale();
+  }, 0);
 }
 
 function doPlaceTrap(square) {
   if (state.isAnimating) return;
+  const trapType = state.room?.myForcedTrapType || state.selectedTrapType;
+  if (!trapType) {
+    showError('仕掛けが選択されていません');
+    return;
+  }
   stopCountdown();
-  socket.emit('place-trap', { square }, ({ error }) => {
+  socket.emit('place-trap', { square, trapType }, ({ error }) => {
     if (error) { startCountdown(); return showError(error); }
     SFX.place();
+    state.selectedTrapType = null;
     showNotification('仕掛けを設置しました！\n他の人を待っています...', 2000);
   });
 }
@@ -467,12 +1049,13 @@ async function animatePlayerMove(playerId, fromPos, toPos, baseRoom) {
   const player = tempRoom.players.find(p => p.id === playerId);
   if (!player) return;
 
-  const steps = Math.abs(toPos - fromPos);
-  const dir = toPos > fromPos ? 1 : -1;
-  const ms = steps >= 6 ? 100 : steps >= 4 ? 130 : 160;
+  const path = findPath(fromPos, toPos, baseRoom.boardSize);
+  if (path.length <= 1) return;
 
-  for (let i = 1; i <= steps; i++) {
-    player.position = fromPos + dir * i;
+  const ms = path.length >= 7 ? 100 : path.length >= 5 ? 130 : 160;
+
+  for (let i = 1; i < path.length; i++) {
+    player.position = path[i];
     renderBoard(tempRoom);
     SFX.step();
     await sleep(ms);
@@ -507,18 +1090,30 @@ function addTokenAnim(token, cls) {
   setTimeout(() => token.classList.remove(cls), 900);
 }
 
-async function animateTrapEffect(r) {
+async function animateTrapEffect(r, rollerId = state.myId) {
   const base = getTrapBase(r.type);
   SFX.trap(base);
   showTrapReveal(r);
+
+  // トラップ発動時の墨しぶきパーティクル演出
+  const currentPos = state.room?.players.find(p => p.id === rollerId)?.position;
+  if (currentPos) {
+    createInkSplash(currentPos);
+  }
 
   // トークンアニメーション
   if (r.type === 'involveAll') {
     document.querySelectorAll('.player-token').forEach(t => addTokenAnim(t, 'anim-trap-shake'));
   } else if (r.type === 'gather') {
     document.querySelectorAll('.player-token').forEach(t => addTokenAnim(t, 'anim-trap-gather'));
+  } else if (r.type === 'fireworks') {
+    const ids = [rollerId, ...r.affectedDetails.map(a => a.id)];
+    ids.forEach(id => {
+      const token = document.querySelector(`.player-token[data-pid="${id}"]`);
+      if (token) addTokenAnim(token, 'anim-trap-shake');
+    });
   } else {
-    const token = document.querySelector(`.player-token[data-pid="${state.myId}"]`);
+    const token = document.querySelector(`.player-token[data-pid="${rollerId}"]`);
     if (token) addTokenAnim(token, `anim-trap-${base}`);
   }
 
@@ -530,12 +1125,12 @@ async function animateTrapEffect(r) {
     if (singleMoveTypes.includes(r.type) && r.oldPos !== undefined && r.newPos !== undefined && r.oldPos !== r.newPos) {
       const tempPlayers = state.room.players.map(p => ({ ...p }));
       const tempRoom = { ...state.room, players: tempPlayers };
-      const player = tempRoom.players.find(p => p.id === state.myId);
+      const player = tempRoom.players.find(p => p.id === rollerId);
       if (player) {
         player.position = r.oldPos;
         renderBoard(tempRoom);
         await sleep(120);
-        await animatePlayerMove(state.myId, r.oldPos, r.newPos, tempRoom);
+        await animatePlayerMove(rollerId, r.oldPos, r.newPos, tempRoom);
       }
     }
 
@@ -543,14 +1138,14 @@ async function animateTrapEffect(r) {
     if (r.type === 'swap' && r.playerOldPos !== undefined && r.placerId) {
       const tempPlayers = state.room.players.map(p => ({
         ...p,
-        position: p.id === state.myId ? r.playerOldPos : p.position,
+        position: p.id === rollerId ? r.playerOldPos : p.position,
       }));
       const tempRoom = { ...state.room, players: tempPlayers };
       renderBoard(tempRoom);
       await sleep(120);
-      await animatePlayerMove(state.myId, r.playerOldPos, r.playerNewPos, tempRoom);
-      const myInTemp = tempRoom.players.find(p => p.id === state.myId);
-      if (myInTemp) myInTemp.position = r.playerNewPos;
+      await animatePlayerMove(rollerId, r.playerOldPos, r.playerNewPos, tempRoom);
+      const rollerInTemp = tempRoom.players.find(p => p.id === rollerId);
+      if (rollerInTemp) rollerInTemp.position = r.playerNewPos;
       await animatePlayerMove(r.placerId, r.placerOldPos, r.placerNewPos, tempRoom);
     }
 
@@ -559,7 +1154,7 @@ async function animateTrapEffect(r) {
       const posMap = Object.fromEntries(r.affectedDetails.map(a => [a.id, a.oldPos]));
       const tempPlayers = state.room.players.map(p => ({
         ...p,
-        position: p.id === state.myId ? r.rollerPos
+        position: p.id === rollerId ? r.rollerPos
                 : posMap[p.id] !== undefined ? posMap[p.id] : p.position,
       }));
       const tempRoom = { ...state.room, players: tempPlayers };
@@ -592,6 +1187,37 @@ async function animateTrapEffect(r) {
         }
       }
     }
+
+    // 大筒花火: 発動者が後退したのち、巻き込まれた全員が後退
+    if (r.type === 'fireworks' && r.rollerOldPos !== undefined && r.rollerNewPos !== undefined && r.rollerOldPos !== r.rollerNewPos) {
+      const tempPlayers = state.room.players.map(p => ({ ...p }));
+      const tempRoom = { ...state.room, players: tempPlayers };
+      const player = tempRoom.players.find(p => p.id === rollerId);
+      if (player) {
+        player.position = r.rollerOldPos;
+        r.affectedDetails.forEach(a => {
+          const p = tempRoom.players.find(q => q.id === a.id);
+          if (p) p.position = a.oldPos;
+        });
+
+        renderBoard(tempRoom);
+        await sleep(150);
+
+        // 発動者を4マス後退
+        await animatePlayerMove(rollerId, r.rollerOldPos, r.rollerNewPos, tempRoom);
+        const playerInTemp = tempRoom.players.find(p => p.id === rollerId);
+        if (playerInTemp) playerInTemp.position = r.rollerNewPos;
+
+        // 巻き込まれた隣接プレイヤー全員を2マス後退
+        for (const a of r.affectedDetails) {
+          if (a.oldPos !== a.newPos) {
+            await animatePlayerMove(a.id, a.oldPos, a.newPos, tempRoom);
+            const tp = tempRoom.players.find(p => p.id === a.id);
+            if (tp) tp.position = a.newPos;
+          }
+        }
+      }
+    }
   }
 
   await sleep(400);
@@ -601,6 +1227,9 @@ async function animateTrapEffect(r) {
 function renderPlayers(room) {
   const list = document.getElementById('players-list');
   list.innerHTML = '';
+  
+  const layout = BOARD_LAYOUTS[room.boardSize];
+
   for (const p of room.players) {
     const entry = document.createElement('div');
     entry.className = 'player-entry';
@@ -612,17 +1241,74 @@ function renderPlayers(room) {
     if (p.skipNextTurn) statuses.push('お休み');
     if (p.halfDice) statuses.push('逆風中');
 
+    const node = layout ? layout.nodes.find(n => n.id === p.position) : null;
+    const posLabel = node ? node.label : p.position;
+    const posText = p.finished ? 'GOAL' : (posLabel === '始' || posLabel === '終' ? posLabel : `${posLabel}マス目`);
+
+    // Route badge
+    let routeBadge = '';
+    if (!p.finished && p.preferredBranch) {
+      if (p.preferredBranch === 'A') routeBadge = '<span class="p-route-badge route-a-badge" title="桜街道 (上路)">🌸</span>';
+      else if (p.preferredBranch === 'B') routeBadge = '<span class="p-route-badge route-b-badge" title="竹林街道 (中路)">🎋</span>';
+      else if (p.preferredBranch === 'C') routeBadge = '<span class="p-route-badge route-c-badge" title="藤街道 (下路)">🌊</span>';
+    }
+
     const isSelf = p.id === state.myId;
     entry.innerHTML = `
       <div class="p-token" style="background:${p.color}"></div>
       <div class="p-info">
-        <div class="p-name">${isSelf ? '★ ' : ''}${escHtml(p.name)}</div>
-        <div class="p-pos">${p.finished ? 'GOAL' : `${p.position}マス目`}</div>
+        <div class="p-name">${isSelf ? '★ ' : ''}${escHtml(p.name)} ${routeBadge}</div>
+        <div class="p-pos">${posText}</div>
       </div>
       ${statuses.length ? `<div class="p-status">${statuses.join(' ')}</div>` : ''}
     `;
     list.appendChild(entry);
   }
+}
+
+// ========= Route Selector =========
+function renderRouteSelector() {
+  const myPlayer = state.room?.players.find(p => p.id === state.myId);
+  if (!myPlayer || myPlayer.finished) return null;
+
+  const currentRoute = state.room.myPreferredRoute || 'B';
+
+  const wrap = document.createElement('div');
+  wrap.className = 'route-selector-wrap';
+
+  const label = document.createElement('div');
+  label.className = 'route-selector-label';
+  label.textContent = '📍 進路選択 (道標)';
+  wrap.appendChild(label);
+
+  const btnGroup = document.createElement('div');
+  btnGroup.className = 'route-selector-btns';
+
+  const routes = [
+    { key: 'A', name: '🌸 桜街道 (安全/長)', cls: 'route-btn-a' },
+    { key: 'B', name: '🎋 竹林街道 (標準)', cls: 'route-btn-b' },
+    { key: 'C', name: '🌊 藤街道 (近道/難)', cls: 'route-btn-c' },
+  ];
+
+  routes.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = `route-select-btn ${r.cls}`;
+    if (currentRoute === r.key) {
+      btn.classList.add('selected');
+    }
+    btn.textContent = r.name;
+    btn.addEventListener('click', () => {
+      if (currentRoute === r.key) return;
+      SFX.step();
+      socket.emit('change-route', { route: r.key }, ({ error }) => {
+        if (error) showError(error);
+      });
+    });
+    btnGroup.appendChild(btn);
+  });
+
+  wrap.appendChild(btnGroup);
+  return wrap;
 }
 
 // ========= Controls =========
@@ -643,33 +1329,38 @@ function renderControls(room) {
     return;
   }
 
+  // 進路選択の道標をコントロールパネル上部に表示
+  const routeSelector = renderRouteSelector();
+  if (routeSelector) {
+    panel.appendChild(routeSelector);
+  }
+
+  const phaseDiv = document.createElement('div');
+  phaseDiv.className = 'phase-controls-wrap';
+  panel.appendChild(phaseDiv);
+
   if (room.status === 'placement') {
     if (room.myPlacedThisRound) {
       const waiting = room.waitingForPlacement;
-      panel.innerHTML = `<div class="waiting-turn">⏳ 待機中... あと ${waiting.length}人 (${waiting.map(n => escHtml(n)).join(', ')})</div>`;
+      phaseDiv.innerHTML = `<div class="waiting-turn">⏳ 待機中... あと ${waiting.length}人 (${waiting.map(n => escHtml(n)).join(', ')})</div>`;
     } else {
-      renderTrapSelection(panel, room);
+      renderTrapSelection(phaseDiv, room);
     }
     return;
   }
 
   if (room.status === 'action') {
     if (room.currentActionPlayerId === state.myId) {
-      renderDiceRoll(panel);
+      renderDiceRoll(phaseDiv);
     } else {
       const current = room.players.find(p => p.id === room.currentActionPlayerId);
-      panel.innerHTML = `<div class="waiting-turn">⏳ ${current ? escHtml(current.name) : '?'} のターンです...</div>`;
+      phaseDiv.innerHTML = `<div class="waiting-turn">⏳ ${current ? escHtml(current.name) : '?'} のターンです...</div>`;
     }
   }
 }
 
 function renderTrapSelection(panel, room) {
-  const trapType = room.myAssignedTrap;
-  const def = TRAP_DEFS.find(t => t.type === trapType);
-  if (!def) return;
-
   const isChain = !!room.myForcedTrapType;
-  const pRange = room.myPlacementRange;
 
   const wrap = document.createElement('div');
   wrap.className = 'trap-selection';
@@ -678,28 +1369,75 @@ function renderTrapSelection(panel, room) {
   const header = document.createElement('div');
   header.className = 'trap-selection-title';
   header.textContent = isChain
-    ? '🔗 連鎖中！以下の仕掛けが配布されました'
-    : '今ターンの仕掛けが配布されました';
+    ? '🔗 連鎖中！仕掛け「連鎖」を強制配置します'
+    : '手札から配置する仕掛けを選択してください';
   wrap.appendChild(header);
 
-  // 配布されたトラップカード
-  const card = document.createElement('div');
-  card.className = 'assigned-trap-card';
-  card.innerHTML = `
-    <span class="trap-card-emoji">${def.emoji}</span>
-    <div class="trap-card-info">
-      <div class="trap-card-name">${def.name}</div>
-      <div class="trap-card-desc">${def.desc}</div>
-    </div>
-  `;
-  wrap.appendChild(card);
+  if (isChain) {
+    // 強制配置される連鎖トラップカード
+    const card = document.createElement('div');
+    card.className = 'assigned-trap-card hand-card selected';
+    const def = TRAP_DEFS.find(t => t.type === 'chain');
+    card.innerHTML = `
+      <span class="trap-card-emoji">${def?.emoji || '🔗'}</span>
+      <div class="trap-card-info">
+        <div class="trap-card-name">${def?.name || '連鎖'}</div>
+        <div class="trap-card-desc">${def?.desc || ''}</div>
+      </div>
+    `;
+    wrap.appendChild(card);
+  } else {
+    // 手札3枚表示
+    const cardsContainer = document.createElement('div');
+    cardsContainer.className = 'trap-cards-container';
+
+    const hand = room.myHand || [];
+    
+    // 現在選択されているトラップが手札に無ければリセット
+    if (state.selectedTrapType && !hand.includes(state.selectedTrapType)) {
+      state.selectedTrapType = null;
+    }
+
+    hand.forEach(type => {
+      const def = TRAP_DEFS.find(t => t.type === type);
+      if (!def) return;
+      
+      const card = document.createElement('div');
+      card.className = 'assigned-trap-card hand-card';
+      if (state.selectedTrapType === type) {
+        card.classList.add('selected');
+      }
+      card.innerHTML = `
+        <span class="trap-card-emoji">${def.emoji}</span>
+        <div class="trap-card-info">
+          <div class="trap-card-name">${def.name}</div>
+          <div class="trap-card-desc">${def.desc}</div>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        SFX.step();
+        if (state.selectedTrapType === type) {
+          state.selectedTrapType = null;
+        } else {
+          state.selectedTrapType = type;
+        }
+        renderBoard(room); // 盤面の配置ハイライトを更新
+        renderTrapSelection(panel, room); // 手札の選択表示を更新
+      });
+      cardsContainer.appendChild(card);
+    });
+    wrap.appendChild(cardsContainer);
+  }
 
   // 配置指示
   const hint = document.createElement('div');
   hint.className = 'trap-placement-hint';
-  hint.textContent = pRange
-    ? `👆 ${pRange.min}〜${pRange.max}マス目の緑マスをクリックして設置`
-    : '設置できるマスがありません';
+  const activeSelected = isChain ? 'chain' : state.selectedTrapType;
+  if (activeSelected) {
+    hint.textContent = '👆 スタートとゴールを除く、盤面のいずれかのマスをクリックして設置';
+  } else {
+    hint.textContent = '👈 設置する仕掛け札（木札）を選択してください';
+  }
   wrap.appendChild(hint);
 
   const timer = document.createElement('div');
@@ -708,6 +1446,7 @@ function renderTrapSelection(panel, room) {
   wrap.appendChild(timer);
   updateCountdown();
 
+  panel.innerHTML = '';
   panel.appendChild(wrap);
 }
 
@@ -729,40 +1468,71 @@ function renderDiceRoll(panel) {
     stopCountdown();
     rollBtn.disabled = true;
 
-    const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-
-    // サイコロ回転アニメーション
+    // サイコロ筒の演出オーバーレイを表示
+    const overlay = document.getElementById('dice-anim-overlay');
+    if (overlay) {
+      overlay.classList.remove('hidden');
+      const cupWrap = overlay.querySelector('.dice-cup-wrap');
+      const tray = overlay.querySelector('#dice-tray');
+      cupWrap.className = 'dice-cup-wrap shake';
+      tray.innerHTML = '';
+    }
     SFX.diceRoll();
-    await new Promise(resolve => {
-      let count = 0;
-      const interval = setInterval(() => {
-        display.textContent = faces[Math.floor(Math.random() * 6)];
-        if (++count >= 10) { clearInterval(interval); resolve(); }
-      }, 75);
-    });
 
-    // サーバーへロール
-    const result = await new Promise(resolve => socket.emit('roll-dice', resolve));
-    const { diceResult, skipped, trapResults, error } = result;
+    const myPlayer = state.room?.players.find(p => p.id === state.myId);
+    const fromPos = myPlayer ? myPlayer.position : '0';
 
-    if (error) { state.isAnimating = false; showError(error); return; }
+    // サーバーへロール要求（通信とアニメーションの並行処理）
+    const resultPromise = new Promise(resolve => socket.emit('roll-dice', resolve));
+    
+    // 最低限900msはシェイクアニメーションを見せる
+    const [result] = await Promise.all([
+      resultPromise,
+      sleep(900),
+    ]);
+
+    const { diceResult, skipped, toPos, trapResults, error } = result;
+
+    if (error) {
+      if (overlay) overlay.classList.add('hidden');
+      state.isAnimating = false;
+      showError(error);
+      return;
+    }
 
     if (skipped) {
-      display.textContent = '💤';
+      if (overlay) overlay.classList.add('hidden');
       SFX.skip();
+      showNotification('お休みです！', 1500);
       await sleep(800);
     } else if (diceResult) {
-      display.textContent = faces[diceResult - 1];
-      SFX.diceLand(diceResult);
-      // コマ移動アニメーション
-      const myPlayer = state.room?.players.find(p => p.id === state.myId);
-      if (myPlayer && state.room) {
-        const fromPos = myPlayer.position;
-        const toPos = Math.min(fromPos + diceResult, state.room.boardSize);
-        if (toPos > fromPos) {
-          await animatePlayerMove(state.myId, fromPos, toPos, state.room);
-        }
+      if (overlay) {
+        const cupWrap = overlay.querySelector('.dice-cup-wrap');
+        const tray = overlay.querySelector('#dice-tray');
+        cupWrap.classList.remove('shake');
+        cupWrap.classList.add('rollout');
+
+        // サイコロを盆に転がす
+        SFX.diceLand(diceResult);
+        const dice = document.createElement('div');
+        dice.className = `wood-dice face-${diceResult} roll`;
+        dice.innerHTML = `<span class="wood-dice-face">${getTraditionalFace(diceResult)}</span>`;
+        tray.appendChild(dice);
       }
+
+      await sleep(1500); // 出目をじっくり見せる
+      if (overlay) {
+        overlay.classList.add('hidden');
+        const title = overlay.querySelector('.dice-roll-announcement');
+        if (title) title.remove();
+      }
+
+      // コマ移動アニメーション
+      if (toPos && toPos !== fromPos && state.room) {
+        await animatePlayerMove(state.myId, fromPos, toPos, state.room);
+      }
+    } else {
+      if (overlay) overlay.classList.add('hidden');
     }
 
     // トラップ演出
@@ -903,6 +1673,7 @@ function showTrapNotification(r) {
     wander:       `${base}🌀 ランダム移動！\n${r.placerName} の罠！\n${r.delta > 0 ? '+' : ''}${r.delta}マス移動 (${r.oldPos}→${r.newPos})`,
     gather:       `${base}📣 全員集合！\n${r.placerName} の罠！\n全員が ${r.gatherPos}マス目に集結！`,
     'gather-fail': `${base}📣 全員集合→落とし穴！\n設置者ゴール済みのため\n${r.oldPos} → ${r.newPos} マス目`,
+    fireworks:    `${base}🎆 大筒花火！\n${r.placerName} の罠！\n発動マスと隣接マスの全員を巻き込む！`,
   };
   showNotification(msgs[r.type] || '仕掛けが発動！', 3500);
 }
@@ -918,6 +1689,27 @@ function showNotification(msg, duration = 2500) {
 function showError(msg) { showNotification('⚠️ ' + msg, 3000); }
 
 // ========= Trap Guide =========
+// ========= 遊び方 / 更新情報 =========
+document.getElementById('btn-howto').addEventListener('click', () => {
+  document.getElementById('howto-modal').classList.remove('hidden');
+});
+document.getElementById('btn-close-howto').addEventListener('click', () => {
+  document.getElementById('howto-modal').classList.add('hidden');
+});
+document.getElementById('howto-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+
+document.getElementById('btn-changelog').addEventListener('click', () => {
+  document.getElementById('changelog-modal').classList.remove('hidden');
+});
+document.getElementById('btn-close-changelog').addEventListener('click', () => {
+  document.getElementById('changelog-modal').classList.add('hidden');
+});
+document.getElementById('changelog-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) e.currentTarget.classList.add('hidden');
+});
+
 document.getElementById('btn-trap-guide').addEventListener('click', () => {
   const modal = document.getElementById('trap-guide-modal');
   const list = document.getElementById('trap-guide-list');
@@ -951,4 +1743,49 @@ function escHtml(str) {
   const d = document.createElement('div');
   d.appendChild(document.createTextNode(String(str)));
   return d.innerHTML;
+}
+
+// 画面リサイズ時に縮小フィット・接続線を再計算するイベント
+window.addEventListener('resize', () => {
+  if (state.room) {
+    resetBoardScale();
+    drawBoardPaths(state.room);
+    adjustBoardScale();
+  }
+});
+
+function resetBoardScale() {
+  const wrapper = document.querySelector('.board-wrapper');
+  const container = document.querySelector('.board-container');
+  if (!wrapper || !container) return;
+
+  container.style.transform = 'none';
+  container.style.margin = '0';
+  wrapper.style.height = 'auto';
+
+  // Force reflow to get true unscaled dimensions
+  container.offsetHeight;
+}
+
+function adjustBoardScale() {
+  if (!state.room) return;
+  const wrapper = document.querySelector('.board-wrapper');
+  const container = document.querySelector('.board-container');
+  if (!wrapper || !container) return;
+
+  const wrapperWidth = wrapper.clientWidth - 20; // 10px padding on each side
+  const containerWidth = container.offsetWidth;
+
+  if (containerWidth > wrapperWidth && wrapperWidth > 100) {
+    const scale = wrapperWidth / containerWidth;
+    container.style.transform = `scale(${scale})`;
+    container.style.transformOrigin = 'top left';
+    
+    const scaledHeight = container.offsetHeight * scale;
+    wrapper.style.height = `${scaledHeight + 20}px`;
+  } else {
+    container.style.transform = 'none';
+    container.style.margin = '0 auto';
+    wrapper.style.height = 'auto';
+  }
 }

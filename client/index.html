@@ -4,14 +4,40 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>仕掛け道中</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;700;800&display=swap" rel="stylesheet">
+  <meta property="og:title" content="仕掛け道中">
+  <meta property="og:description" content="罠を仕込みながら進む、読み合いすごろく。最大4人でオンライン対戦！">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/">
+  <meta property="og:image" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/og.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="🎲 仕掛け道中">
+  <meta name="twitter:description" content="罠を仕込みながら進む、読み合いすごろく。最大4人でオンライン対戦！">
+  <meta name="twitter:image" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/og.png">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css?v=2.8.5">
 </head>
 <body>
 
   <!-- ロビー -->
   <div id="screen-lobby" class="screen active">
     <div class="lobby-container">
-      <h1 class="game-title">🎲 仕掛け道中</h1>
+      <div class="game-logo">
+        <svg viewBox="0 0 90 90" width="68" height="68" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="45" cy="45" r="42" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+          <circle cx="45" cy="45" r="36" fill="rgba(201,168,76,0.04)" stroke="#c9a84c" stroke-width="0.6"/>
+          <path d="M45 3 L49 9 L45 15 L41 9 Z" fill="#c9a84c"/>
+          <path d="M87 45 L81 49 L75 45 L81 41 Z" fill="#c9a84c"/>
+          <path d="M45 87 L41 81 L45 75 L49 81 Z" fill="#c9a84c"/>
+          <path d="M3 45 L9 41 L15 45 L9 49 Z" fill="#c9a84c"/>
+          <text x="45" y="60" text-anchor="middle" font-size="36" fill="#c9a84c" font-weight="700" font-family="'Shippori Mincho', serif">道</text>
+        </svg>
+      </div>
+      <h1 class="game-title">仕掛け道中</h1>
       <p class="game-subtitle">罠を仕込みながら進む、読み合いすごろく</p>
       <div class="input-group">
         <input type="text" id="player-name" placeholder="プレイヤー名（最大10文字）" maxlength="10" autocomplete="off">
@@ -29,6 +55,13 @@
         <button class="round-btn" data-rounds="30">30R</button>
         <button class="round-btn" data-rounds="50">50R</button>
       </div>
+      <div class="privacy-toggle">
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-private">
+          <span class="toggle-switch"></span>
+          <span class="toggle-text">🔒 非公開ルーム</span>
+        </label>
+      </div>
       <button id="btn-create" class="btn btn-primary">ルームを作る</button>
       <div class="divider">または</div>
       <div class="join-group">
@@ -44,6 +77,11 @@
           <div class="room-list-empty">接続中...</div>
         </div>
       </div>
+      <div class="lobby-footer">
+        <button id="btn-howto" class="btn-info">📜 遊び方</button>
+        <span class="version-badge">v2.0</span>
+        <button id="btn-changelog" class="btn-info">📋 更新情報</button>
+      </div>
     </div>
   </div>
 
@@ -53,12 +91,16 @@
       <h2>待機中</h2>
       <div class="room-code-box">
         ルームコード：<span id="room-code-display" class="room-code-text"></span>
-        <button id="btn-copy-code" class="btn-copy">コピー 📋</button>
+        <div class="room-code-actions">
+          <button id="btn-copy-code" class="btn-copy">コード 📋</button>
+          <button id="btn-copy-invite" class="btn-copy btn-copy-invite">招待リンク 🔗</button>
+        </div>
       </div>
-      <p class="room-code-hint">このコードを友達に教えてください</p>
+      <p class="room-code-hint">コードまたはリンクを友達に教えてください</p>
       <div id="waiting-players" class="waiting-players"></div>
       <button id="btn-start" class="btn btn-primary" style="display:none">ゲーム開始！</button>
       <p id="waiting-message" class="waiting-message"></p>
+      <button id="btn-leave-waiting" class="btn-leave-waiting">← ロビーに戻る</button>
     </div>
   </div>
 
@@ -72,7 +114,10 @@
 
     <div class="game-layout">
       <div class="board-wrapper">
-        <div id="board" class="board"></div>
+        <div class="board-container">
+          <svg id="board-paths-overlay"></svg>
+          <div id="board" class="board"></div>
+        </div>
       </div>
 
       <div class="side-panel">
@@ -83,6 +128,11 @@
         <div class="log-panel">
           <div class="panel-title">ゲームログ</div>
           <div id="game-log"></div>
+          <div id="chat-log" class="chat-log"></div>
+          <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="チャット..." maxlength="40" autocomplete="off">
+            <button id="btn-chat-send" class="btn-chat-send">▶</button>
+          </div>
         </div>
       </div>
     </div>
@@ -101,6 +151,108 @@
         <button id="btn-close-guide" class="btn-close-guide">✕</button>
       </div>
       <div id="trap-guide-list" class="trap-guide-list"></div>
+    </div>
+  </div>
+
+  <!-- 遊び方モーダル -->
+  <div id="howto-modal" class="info-modal hidden">
+    <div class="info-modal-inner">
+      <div class="info-modal-header">
+        <span class="info-modal-title">📜 遊び方</span>
+        <button id="btn-close-howto" class="btn-close-guide">✕</button>
+      </div>
+      <div class="info-modal-body">
+        <div class="howto-section">
+          <h3 class="howto-heading">🎯 目的</h3>
+          <p>ゴールマスに最初に到達した人の勝ち！<br>仕掛けを踏まないよう気をつけながら、相手に仕掛けを踏ませよう。</p>
+        </div>
+        <div class="howto-section">
+          <h3 class="howto-heading">🔄 ゲームの流れ</h3>
+          <div class="howto-step">
+            <span class="howto-num">1</span>
+            <div><strong>配置フェーズ</strong><br>毎ラウンド手札が3枚になるよう補充されます。お好みの仕掛け木札を選択して、盤面のお好きなマス（始・終除く）をクリックして設置しましょう。</div>
+          </div>
+          <div class="howto-step">
+            <span class="howto-num">2</span>
+            <div><strong>行動フェーズ</strong><br>順番にサイコロを振って進みます。仕掛けを踏むと効果が発動！</div>
+          </div>
+          <div class="howto-step">
+            <span class="howto-num">3</span>
+            <div><strong>繰り返し</strong><br>全員がサイコロを振り終えたら次のラウンドへ。誰かがゴールするまで続きます。</div>
+          </div>
+        </div>
+        <div class="howto-section">
+          <h3 class="howto-heading">💡 ポイント</h3>
+          <ul class="howto-list">
+            <li>誰がどこに仕掛けを置いたかは分かりません</li>
+            <li>設置者自身も自分の仕掛けを踏む場合があります</li>
+            <li>ラウンド上限に達するとその時点で終了</li>
+            <li>60秒操作がないとキックされます（再接続可）</li>
+          </ul>
+        </div>
+        <div class="howto-section">
+          <h3 class="howto-heading">🃏 仕掛けの種類（一部）</h3>
+          <ul class="howto-list">
+            <li>💀 落とし穴 — 3マス戻す</li>
+            <li>🚧 通せんぼ — 次ターンお休み</li>
+            <li>🔄 入れ替え — 設置者と位置交換</li>
+            <li>🌪️ 全員巻き込み — 他全員が2マス戻る</li>
+            <li>❓ ランダム — 発動まで効果は謎！</li>
+          </ul>
+          <p class="howto-note">ゲーム中の「📖 一覧」ボタンで全種類を確認できます。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 更新情報モーダル -->
+  <div id="changelog-modal" class="info-modal hidden">
+    <div class="info-modal-inner">
+      <div class="info-modal-header">
+        <span class="info-modal-title">📋 更新情報</span>
+        <button id="btn-close-changelog" class="btn-close-guide">✕</button>
+      </div>
+      <div class="info-modal-body">
+        <div class="changelog-entry">
+          <div class="changelog-ver">v2.0 <span class="changelog-date">2026年6月</span></div>
+          <ul class="changelog-list">
+            <li>🌸 <strong>3つの分岐街道（桜・竹・藤）</strong>：上路・中路・下路の3ルートを道標で選択して進行できるようになりました。</li>
+            <li>🃏 <strong>手札3枚制</strong>：常に3枚の手札木札を持ち、好みの罠を選んで設置できます。</li>
+            <li>📍 <strong>設置制限の完全解除</strong>：前方6マスの制限が廃止され、スタート・ゴールを除く全マスに配置可能になりました。</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
+          <div class="changelog-ver">v1.0 <span class="changelog-date">2025年5月</span></div>
+          <ul class="changelog-list">
+            <li>🎉 仕掛け道中 公開開始</li>
+            <li>10種類の仕掛けを実装</li>
+            <li>最大4人のオンラインマルチプレイ</li>
+            <li>🔒 プライベートルーム機能</li>
+            <li>🔗 招待リンク機能</li>
+            <li>💬 ゲーム内チャット</li>
+            <li>📱 スマートフォン対応</li>
+            <li>多段蛇行ボードレイアウト</li>
+            <li>江戸風デザイン・サウンド</li>
+            <li>90秒再接続猶予・自動キック</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- チャットトースト -->
+  <div id="chat-toast" class="chat-toast hidden"></div>
+
+  <!-- サイコロ演出オーバーレイ -->
+  <div id="dice-anim-overlay" class="dice-anim-overlay hidden">
+    <div class="dice-anim-content">
+      <div class="dice-cup-wrap">
+        <div class="dice-cup">
+          <div class="dice-cup-rim"></div>
+          <div class="dice-cup-pattern"></div>
+        </div>
+      </div>
+      <div class="dice-tray" id="dice-tray"></div>
     </div>
   </div>
 

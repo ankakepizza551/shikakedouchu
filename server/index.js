@@ -5,7 +5,7 @@ const path = require('path');
 const {
   createRoom, joinRoom, startGame, placeTrap, rollDice,
   getRoomBySocketId, removePlayer, sanitizeRoom, resetRoom, getRoomList,
-  reconnectPlayer,
+  reconnectPlayer, changeRoute,
 } = require('./gameLogic');
 
 const app = express();
@@ -13,6 +13,57 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, '../client')));
+
+// ========= OG画像 (Twitter Card用) =========
+let sharp;
+try { sharp = require('sharp'); } catch (e) {}
+
+app.get('/og.png', async (req, res) => {
+  const svg = `<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#0f0a05"/>
+        <stop offset="100%" stop-color="#1a1008"/>
+      </linearGradient>
+      <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#f0d878"/>
+        <stop offset="50%" stop-color="#c9a84c"/>
+        <stop offset="100%" stop-color="#edd070"/>
+      </linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect x="0" y="0" width="1200" height="4" fill="url(#gold)"/>
+    <rect x="0" y="626" width="1200" height="4" fill="url(#gold)"/>
+    <rect x="0" y="0" width="4" height="630" fill="url(#gold)"/>
+    <rect x="1196" y="0" width="4" height="630" fill="url(#gold)"/>
+    <g transform="translate(600,200)">
+      <circle cx="0" cy="0" r="90" fill="none" stroke="#c9a84c" stroke-width="2.5"/>
+      <circle cx="0" cy="0" r="76" fill="rgba(201,168,76,0.06)" stroke="#c9a84c" stroke-width="1"/>
+      <polygon points="0,-90 8,-76 0,-62 -8,-76" fill="#c9a84c"/>
+      <polygon points="90,0 76,8 62,0 76,-8" fill="#c9a84c"/>
+      <polygon points="0,90 -8,76 0,62 8,76" fill="#c9a84c"/>
+      <polygon points="-90,0 -76,-8 -62,0 -76,8" fill="#c9a84c"/>
+      <text y="28" text-anchor="middle" font-size="80" fill="#c9a84c" font-family="serif" font-weight="bold">道</text>
+    </g>
+    <text x="600" y="360" text-anchor="middle" font-size="72" fill="url(#gold)" font-family="serif" font-weight="bold" letter-spacing="16">仕掛け道中</text>
+    <text x="600" y="430" text-anchor="middle" font-size="30" fill="#a09070" font-family="serif" letter-spacing="4">罠を仕込みながら進む、読み合いすごろく</text>
+    <rect x="400" y="510" width="400" height="52" rx="26" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+    <text x="600" y="543" text-anchor="middle" font-size="22" fill="#c9a84c" font-family="serif" letter-spacing="2">▶ 最大4人 オンライン対戦</text>
+  </svg>`;
+
+  if (!sharp) {
+    res.set('Content-Type', 'image/svg+xml');
+    return res.send(svg);
+  }
+  try {
+    const png = await sharp(Buffer.from(svg)).png().toBuffer();
+    res.set('Content-Type', 'image/png');
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(png);
+  } catch (e) {
+    res.status(500).send('OG image error: ' + e.message);
+  }
+});
 
 // ========= セッショントークン（再接続用）=========
 const sessionTokens = new Map();   // token  -> { roomCode, socketId, playerName }
@@ -97,8 +148,8 @@ function broadcastRoom(room) {
 
 // ========= ソケットハンドラ =========
 io.on('connection', (socket) => {
-  socket.on('create-room', ({ playerName, boardSize, maxRounds }, callback) => {
-    const { roomCode, room } = createRoom(socket.id, playerName, boardSize, maxRounds);
+  socket.on('create-room', ({ playerName, boardSize, maxRounds, isPrivate }, callback) => {
+    const { roomCode, room } = createRoom(socket.id, playerName, boardSize, maxRounds, isPrivate);
     const token = storeSession(socket.id, roomCode, playerName);
     socket.join(roomCode);
     callback({ roomCode, room: sanitizeRoom(room, socket.id), reconnectToken: token });
@@ -126,28 +177,71 @@ io.on('connection', (socket) => {
     callback({ success: true });
   });
 
-  socket.on('place-trap', ({ square }, callback) => {
+  socket.on('place-trap', ({ square, trapType }, callback) => {
     clearKickTimer(socket.id);
-    const result = placeTrap(socket.id, square);
+    const result = placeTrap(socket.id, square, trapType);
     if (result.error) return callback({ error: result.error });
     broadcastRoom(result.room);
     callback({ success: true });
   });
 
+  socket.on('change-route', ({ route }, callback) => {
+    const result = changeRoute(socket.id, route);
+    if (result.error) return callback ? callback({ error: result.error }) : null;
+    broadcastRoom(result.room);
+    if (callback) callback({ success: true });
+  });
+
   socket.on('roll-dice', (callback) => {
     clearKickTimer(socket.id);
+    // ロール前の位置を取得（アニメーション用）
+    const preRoom = getRoomBySocketId(socket.id);
+    const prePlayer = preRoom?.players.find(p => p.id === socket.id);
+    const fromPos = prePlayer?.position ?? '0';
+
     const result = rollDice(socket.id);
     if (result.error) return callback({ error: result.error });
+
+    const postPlayer = result.room.players.find(p => p.id === socket.id);
+    const toPos = postPlayer ? postPlayer.position : fromPos;
+
+    // 他プレイヤーへアニメーション情報を先行送信（room-update より前）
+    for (const p of result.room.players) {
+      if (p.id !== socket.id) {
+        io.to(p.id).emit('player-action', {
+          playerId: socket.id,
+          diceResult: result.diceResult,
+          skipped: result.skipped,
+          fromPos,
+          toPos,
+          trapResults: result.trapResults,
+        });
+      }
+    }
+
     broadcastRoom(result.room);
     callback({
       diceResult: result.diceResult,
       skipped: result.skipped,
+      toPos,
       trapResults: result.trapResults,
     });
   });
 
   socket.on('get-rooms', (callback) => {
     callback(getRoomList());
+  });
+
+  socket.on('chat', ({ message }) => {
+    const room = getRoomBySocketId(socket.id);
+    if (!room) return;
+    const player = room.players.find(p => p.id === socket.id);
+    if (!player) return;
+    const msg = String(message || '').trim().slice(0, 40);
+    if (!msg) return;
+    for (const p of room.players) {
+      io.to(p.id).emit('chat-message', { name: player.name, message: msg, color: player.color });
+    }
   });
 
   socket.on('restart-game', (callback) => {

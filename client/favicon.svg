@@ -1,0 +1,10 @@
+<svg viewBox="0 0 90 90" xmlns="http://www.w3.org/2000/svg">
+  <rect width="90" height="90" rx="18" fill="#0b0805"/>
+  <circle cx="45" cy="45" r="41" fill="none" stroke="#c9a84c" stroke-width="1.8"/>
+  <circle cx="45" cy="45" r="35" fill="none" stroke="#c9a84c" stroke-width="0.7"/>
+  <path d="M45 4 L50 11 L45 18 L40 11 Z" fill="#c9a84c"/>
+  <path d="M86 45 L79 50 L72 45 L79 40 Z" fill="#c9a84c"/>
+  <path d="M45 86 L40 79 L45 72 L50 79 Z" fill="#c9a84c"/>
+  <path d="M4 45 L11 40 L18 45 L11 50 Z" fill="#c9a84c"/>
+  <text x="45" y="61" text-anchor="middle" font-size="38" fill="#c9a84c" font-weight="700" font-family="serif">道</text>
+</svg>

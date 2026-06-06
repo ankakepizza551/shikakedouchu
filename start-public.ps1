@@ -1,4 +1,4 @@
-# 仕掛け道中 - インターネット公開スクリプト
+﻿# 仕掛け道中 - インターネット公開スクリプト
 # 使い方: PowerShellで実行 → 表示されたURLを友達に共有
 
 param(
@@ -38,11 +38,11 @@ if ($Method -eq "ngrok") {
         Write-Host "【インストール方法】" -ForegroundColor White
         Write-Host "winget install Cloudflare.cloudflared" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "または ngrok を使う場合:" -ForegroundColor White
-        Write-Host "  1. https://ngrok.com でアカウント作成"
-        Write-Host "  2. ngrok をインストール: winget install ngrok"
-        Write-Host "  3. ngrok config add-authtoken <YOUR_TOKEN>"
-        Write-Host "  4. このスクリプトを -Method ngrok で再実行"
-        Write-Host "     例: .\start-public.ps1 -Method ngrok"
+        Write-Host 'または ngrok を使う場合:' -ForegroundColor White
+        Write-Host '  1. https://ngrok.com でアカウント作成'
+        Write-Host '  2. ngrok をインストール: winget install ngrok'
+        Write-Host '  3. ngrok config add-authtoken [YOUR_TOKEN]'
+        Write-Host '  4. このスクリプトを -Method ngrok で再実行'
+        Write-Host '     例: .\start-public.ps1 -Method ngrok'
     }
 }

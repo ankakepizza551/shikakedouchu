@@ -6,9 +6,13 @@
 
 body {
   font-family: 'Segoe UI', 'Hiragino Sans', 'Yu Gothic', sans-serif;
-  background: #0e0a08;
+  background-color: #0b0805;
+  /* 青海波 (seigaiha) */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='30'%3E%3Ccircle cx='30' cy='60' r='34' fill='none' stroke='%23201208' stroke-width='1.3'/%3E%3Ccircle cx='0' cy='30' r='34' fill='none' stroke='%23201208' stroke-width='1.3'/%3E%3Ccircle cx='60' cy='30' r='34' fill='none' stroke='%23201208' stroke-width='1.3'/%3E%3Ccircle cx='30' cy='0' r='34' fill='none' stroke='%23201208' stroke-width='1.3'/%3E%3C/svg%3E");
+  background-size: 60px 30px;
   color: #e8dcc8;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .screen {
@@ -31,7 +35,12 @@ body {
   border-radius: 16px;
   max-width: 420px;
   width: 90%;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  /* 多重縁取り（漆器風） */
+  box-shadow:
+    0 8px 40px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(201,168,76,0.18),
+    0 0 0 4px rgba(8,5,2,0.85),
+    0 0 0 5px rgba(90,58,26,0.22);
   border: 1px solid #3d2b1a;
   position: relative;
   overflow: hidden;
@@ -41,14 +50,32 @@ body {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #c9a84c 35%, #e8c870 50%, #c9a84c 65%, transparent);
+  height: 3px;
+  /* 金箔グラデーション */
+  background: linear-gradient(90deg,
+    transparent,
+    #7a5018 6%,
+    #c9a84c 22%,
+    #f5e898 42%,
+    #fff8c0 50%,
+    #f5e898 58%,
+    #c9a84c 78%,
+    #7a5018 94%,
+    transparent);
+}
+
+.game-logo {
+  margin-bottom: 10px;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 10px rgba(201,168,76,0.28));
 }
 
 .game-title {
+  font-family: 'Shippori Mincho', serif;
+  font-weight: 800;
   font-size: clamp(1.6rem, 7vw, 2.4rem);
   margin-bottom: 8px;
-  letter-spacing: clamp(1px, 1vw, 4px);
+  letter-spacing: clamp(4px, 2vw, 10px);
   white-space: nowrap;
   background: linear-gradient(135deg, #f0d878 5%, #c9a84c 45%, #edd070 85%);
   -webkit-background-clip: text;
@@ -61,6 +88,15 @@ body {
   font-size: 0.88rem;
   margin-bottom: 32px;
   line-height: 1.5;
+}
+
+.game-subtitle::after {
+  content: '── ◆ ──';
+  display: block;
+  font-size: 0.72rem;
+  color: #5a4030;
+  letter-spacing: 6px;
+  margin-top: 14px;
 }
 
 .input-group {
@@ -97,6 +133,64 @@ input[type="text"]:focus {
 .btn:hover { transform: translateY(-2px); }
 .btn:active { transform: translateY(0); }
 .btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none !important; }
+
+/* ========= Privacy Toggle ========= */
+.privacy-toggle {
+  margin: 12px 0 4px;
+  display: flex;
+  justify-content: center;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  color: #b09070;
+  font-size: 0.88rem;
+}
+
+.toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-switch {
+  width: 38px;
+  height: 20px;
+  background: #2a1e14;
+  border: 1px solid #4a3828;
+  border-radius: 10px;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #6a5040;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.toggle-label input:checked + .toggle-switch {
+  background: #3a2510;
+  border-color: #c9a84c;
+}
+
+.toggle-label input:checked + .toggle-switch::after {
+  transform: translateX(18px);
+  background: #c9a84c;
+}
+
+.toggle-label input:checked ~ .toggle-text {
+  color: #c9a84c;
+}
 
 .btn-primary {
   background: linear-gradient(135deg, #cc2222 0%, #8a1010 60%, #6a0c08 100%);
@@ -172,9 +266,10 @@ input[type="text"]:focus {
 }
 
 .divider {
-  color: #4a3828;
+  color: #6a5040;
   margin: 16px 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  letter-spacing: 3px;
   position: relative;
 }
 
@@ -183,9 +278,9 @@ input[type="text"]:focus {
   content: '';
   position: absolute;
   top: 50%;
-  width: 38%;
+  width: 36%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, #3d2b1a);
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2) 50%, #4a3020);
 }
 
 .divider::before { left: 0; }
@@ -213,7 +308,11 @@ input[type="text"]:focus {
   border-radius: 16px;
   max-width: 440px;
   width: 90%;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  box-shadow:
+    0 8px 40px rgba(0,0,0,0.75),
+    0 0 0 1px rgba(201,168,76,0.18),
+    0 0 0 4px rgba(8,5,2,0.85),
+    0 0 0 5px rgba(90,58,26,0.22);
   border: 1px solid #3d2b1a;
   position: relative;
   overflow: hidden;
@@ -223,15 +322,26 @@ input[type="text"]:focus {
   content: '';
   position: absolute;
   top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #c9a84c 35%, #e8c870 50%, #c9a84c 65%, transparent);
+  height: 3px;
+  background: linear-gradient(90deg,
+    transparent,
+    #7a5018 6%,
+    #c9a84c 22%,
+    #f5e898 42%,
+    #fff8c0 50%,
+    #f5e898 58%,
+    #c9a84c 78%,
+    #7a5018 94%,
+    transparent);
 }
 
 .waiting-container h2 {
+  font-family: 'Shippori Mincho', serif;
+  font-weight: 700;
   color: #c9a84c;
   margin-bottom: 20px;
   font-size: 1.6rem;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
 }
 
 .room-code-box {
@@ -254,9 +364,16 @@ input[type="text"]:focus {
   text-shadow: 0 0 24px rgba(201,168,76,0.4);
 }
 
+.room-code-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
 .btn-copy {
   display: inline-block;
-  margin-top: 8px;
   padding: 5px 14px;
   background: #1a1008;
   border: 1px solid #5a3a20;
@@ -268,6 +385,12 @@ input[type="text"]:focus {
 }
 
 .btn-copy:hover { background: #3a2010; color: #e8dcc8; }
+
+.btn-copy-invite {
+  border-color: #3d6a30;
+  color: #78a870;
+}
+.btn-copy-invite:hover { background: #1a2e18; color: #a0d098; }
 
 .room-code-hint {
   font-size: 0.75rem;
@@ -305,6 +428,20 @@ input[type="text"]:focus {
   margin-top: 8px;
 }
 
+.btn-leave-waiting {
+  margin-top: 20px;
+  background: none;
+  border: none;
+  color: #5a4535;
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.btn-leave-waiting:hover { color: #b09070; }
+
 /* ========= Game Screen ========= */
 #screen-game {
   padding: 12px 16px;
@@ -324,22 +461,39 @@ input[type="text"]:focus {
   justify-content: space-between;
   align-items: center;
   padding: 10px 16px;
-  background: linear-gradient(90deg, #211916, #1c1510, #211916);
+  background: linear-gradient(90deg, #1a1410, #221916, #1a1410);
   border-radius: 10px;
   border: 1px solid #3d2b1a;
   margin-bottom: 12px;
   flex-shrink: 0;
   position: relative;
+  box-shadow: 0 0 0 1px rgba(201,168,76,0.08), inset 0 1px 0 rgba(201,168,76,0.06);
+}
+
+.game-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(90deg,
+    transparent,
+    #7a5018 8%,
+    #c9a84c 30%,
+    #e8c870 50%,
+    #c9a84c 70%,
+    #7a5018 92%,
+    transparent);
 }
 
 .game-header::after {
   content: '';
   position: absolute;
   bottom: -1px;
-  left: 12%;
-  right: 12%;
+  left: 15%;
+  right: 15%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.25), transparent);
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
   pointer-events: none;
 }
 
@@ -370,10 +524,15 @@ input[type="text"]:focus {
   align-items: flex-start;
   justify-content: center;
   padding: 10px;
-  background: linear-gradient(145deg, #120e0b, #0f0a08);
+  background: linear-gradient(145deg, #0e0c10, #0a0910);
   border-radius: 12px;
   border: 1px solid #2a1e12;
-  box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+  /* 漆塗り額縁 */
+  box-shadow:
+    inset 0 2px 12px rgba(0,0,0,0.7),
+    0 0 0 1px rgba(201,168,76,0.1),
+    0 0 0 3px rgba(6,4,2,0.9),
+    0 0 0 4px rgba(70,45,18,0.18);
 }
 
 .board {
@@ -385,66 +544,164 @@ input[type="text"]:focus {
 }
 
 .board-cell {
-  background: linear-gradient(145deg, #211910, #1a1208);
-  border: 2px solid #3d2b1a;
-  border-radius: 8px;
+  background: linear-gradient(135deg, #322b24 0%, #201a14 60%, #15110d 100%);
+  border: 2px solid #4a3e35;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
   cursor: default;
-  transition: border-color 0.2s, transform 0.15s, background 0.2s;
+  transition: border-color 0.2s, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1.0), background-color 0.2s, box-shadow 0.2s;
   padding: 4px 2px;
   user-select: none;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.6), inset 0 -1px 1px rgba(255,255,255,0.022);
+  transform: rotate(var(--stone-rotate, 0deg)) translate(var(--stone-tx, 0px), var(--stone-ty, 0px)) scale(1);
+  box-shadow: 
+    0 4px 6px -1px rgba(0,0,0,0.65), 
+    0 2px 4px -2px rgba(0,0,0,0.5),
+    inset 0 2px 2px rgba(255,255,255,0.08), 
+    inset 0 -3px 3px rgba(0,0,0,0.45);
 }
 
+.board-cell:hover {
+  transform: rotate(var(--stone-rotate, 0deg)) translate(var(--stone-tx, 0px), var(--stone-ty, 0px)) scale(1.06);
+  border-color: #7d6b5d;
+  box-shadow: 
+    0 6px 12px -2px rgba(0,0,0,0.7), 
+    0 4px 6px -4px rgba(0,0,0,0.6), 
+    inset 0 2px 2px rgba(255,255,255,0.12), 
+    inset 0 -2px 2px rgba(0,0,0,0.3);
+}
+
+/* 石畳・飛び石の各形状（非対称border-radiusと決定論的変形パラメータ） */
+.board-cell.stone-1 {
+  border-radius: 42% 56% 48% 60% / 50% 45% 55% 50%;
+  --stone-rotate: -1.6deg;
+  --stone-tx: -1px;
+  --stone-ty: 2px;
+}
+.board-cell.stone-2 {
+  border-radius: 55% 45% 60% 40% / 48% 52% 45% 55%;
+  --stone-rotate: 1.8deg;
+  --stone-tx: 2px;
+  --stone-ty: -1.5px;
+}
+.board-cell.stone-3 {
+  border-radius: 40% 60% 45% 55% / 55% 40% 60% 40%;
+  --stone-rotate: -2.2deg;
+  --stone-tx: 1.5px;
+  --stone-ty: -2px;
+}
+.board-cell.stone-4 {
+  border-radius: 50% 50% 40% 60% / 45% 55% 50% 50%;
+  --stone-rotate: 1.4deg;
+  --stone-tx: -2px;
+  --stone-ty: 1px;
+}
+
+/* ========= 里程マス (milestone) ========= */
+.board-cell.milestone {
+  border-color: #8c734b;
+  background: linear-gradient(135deg, #4d463d 0%, #332e27 60%, #211d18 100%);
+  box-shadow: 
+    0 4px 6px -1px rgba(0,0,0,0.65), 
+    inset 0 2px 2px rgba(255,255,255,0.15), 
+    inset 0 -3px 3px rgba(0,0,0,0.5);
+}
+
+.board-cell.milestone .cell-label {
+  color: #bfa573;
+  font-size: 0.78rem;
+}
+
+/* ========= 折り返し方向インジケーター ========= */
+.board-cell.turn-right::after,
+.board-cell.turn-left::after {
+  content: '▼';
+  position: absolute;
+  bottom: 2px;
+  font-size: 0.48rem;
+  color: rgba(201,168,76,0.32);
+  pointer-events: none;
+  line-height: 1;
+}
+
+.board-cell.turn-right::after { right: 3px; }
+.board-cell.turn-left::after  { left: 3px; }
+
 .board-cell.start {
-  background: linear-gradient(145deg, #1e3040, #162535);
-  border-color: #5b8fa8;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), inset 0 0 10px rgba(91,143,168,0.14);
+  /* 藍色（あいいろ）- 江戸の藍染め藍石 */
+  background: linear-gradient(135deg, #1f385c 0%, #13243d 60%, #0a1324 100%);
+  border-color: #5381aa;
+  box-shadow: 
+    0 4px 6px -1px rgba(0,0,0,0.65), 
+    inset 0 2px 2px rgba(255,255,255,0.12), 
+    inset 0 -3px 3px rgba(0,0,0,0.5);
 }
 
 .board-cell.goal {
-  background: linear-gradient(145deg, #271900, #1e1200);
-  border-color: #c9a84c;
+  /* 黄金石（おうごんせき） */
+  background: linear-gradient(135deg, #ad8524 0%, #755913 60%, #473507 100%);
+  border-color: #d1b147;
   animation: goalPulse 2s ease-in-out infinite;
 }
 
 @keyframes goalPulse {
   0%, 100% {
-    box-shadow: inset 0 0 10px rgba(201,168,76,0.1), 0 0 0 0 rgba(201,168,76,0.2);
+    box-shadow: 
+      0 4px 6px -1px rgba(0,0,0,0.65), 
+      inset 0 2px 2px rgba(255,255,255,0.15), 
+      inset 0 -3px 3px rgba(0,0,0,0.5);
+    border-color: #d1b147;
   }
   50% {
-    box-shadow: inset 0 0 18px rgba(201,168,76,0.2), 0 0 10px 2px rgba(201,168,76,0.12);
+    box-shadow: 
+      0 4px 12px rgba(209,177,71,0.35), 
+      inset 0 2px 2px rgba(255,255,255,0.25), 
+      inset 0 -2px 2px rgba(0,0,0,0.3);
+    border-color: #f7d568;
   }
 }
 
 .board-cell.placeable {
   cursor: pointer;
   border-color: #2ecc71;
-  background: linear-gradient(145deg, #1c2e18, #162412);
+  background: linear-gradient(145deg, #1c331a 0%, #102110 100%);
   animation: placeablePulse 1.2s ease-in-out infinite;
 }
 
 .board-cell.placeable:hover {
-  background: linear-gradient(145deg, #243a1e, #1c2e18);
-  transform: scale(1.08);
-  border-color: #27ae60;
-  box-shadow: inset 0 0 10px rgba(46,204,113,0.15), 0 0 8px rgba(46,204,113,0.18);
+  background: linear-gradient(145deg, #244221 0%, #162d16 100%);
+  transform: rotate(var(--stone-rotate, 0deg)) translate(var(--stone-tx, 0px), var(--stone-ty, 0px)) scale(1.08);
+  border-color: #2ecc71;
+  box-shadow: 
+    0 6px 14px rgba(46,204,113,0.35), 
+    inset 0 2px 2px rgba(255,255,255,0.2), 
+    inset 0 -2px 2px rgba(0,0,0,0.3);
 }
 
 @keyframes placeablePulse {
-  0%, 100% { box-shadow: inset 0 0 6px rgba(46,204,113,0.1), 0 0 0 0 rgba(46,204,113,0.18); }
-  50% { box-shadow: inset 0 0 10px rgba(46,204,113,0.18), 0 0 7px 1px rgba(46,204,113,0.1); }
+  0%, 100% {
+    box-shadow: 
+      0 4px 6px -1px rgba(0,0,0,0.65), 
+      inset 0 2px 2px rgba(255,255,255,0.1), 
+      inset 0 -3px 3px rgba(0,0,0,0.5);
+  }
+  50% {
+    box-shadow: 
+      0 4px 10px rgba(46,204,113,0.3), 
+      inset 0 2px 2px rgba(255,255,255,0.15), 
+      inset 0 -2px 2px rgba(0,0,0,0.3);
+    border-color: #2ecc71;
+  }
 }
 
 .cell-label {
   font-size: 0.72rem;
-  color: #7a6a58;
+  color: #c5b399;
   font-weight: bold;
   line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
 .board-cell.start .cell-label { color: #7ab8cc; font-size: 0.78rem; }
@@ -508,6 +765,7 @@ input[type="text"]:focus {
   border: 1px solid #3d2b1a;
   padding: 12px;
   overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(201,168,76,0.05), inset 0 1px 0 rgba(201,168,76,0.04);
 }
 
 .panel-title {
@@ -519,6 +777,14 @@ input[type="text"]:focus {
   font-weight: bold;
   padding-left: 8px;
   border-left: 2px solid #5a3a1a;
+}
+
+.panel-title::before {
+  content: '◆ ';
+  font-size: 0.55rem;
+  color: #8a6030;
+  vertical-align: middle;
+  letter-spacing: 0;
 }
 
 .log-panel {
@@ -558,9 +824,14 @@ input[type="text"]:focus {
 }
 
 .player-entry.current-turn {
-  border-left-color: #c9a84c;
-  background: linear-gradient(90deg, #2e2010, #261a0c);
-  box-shadow: inset 0 0 12px rgba(201,168,76,0.07);
+  border-left-color: #f0d878;
+  border-left-width: 4px;
+  background: linear-gradient(90deg, #3a2810, #2a1c0e);
+  box-shadow: inset 0 0 16px rgba(201,168,76,0.14), 0 0 8px rgba(201,168,76,0.1);
+}
+
+.player-entry.current-turn .p-name {
+  color: #f0d878;
 }
 
 .player-entry.finished {
@@ -608,7 +879,16 @@ input[type="text"]:focus {
   min-height: 80px;
   display: flex;
   align-items: center;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.2), 0 0 0 1px rgba(201,168,76,0.05);
+  position: relative;
+}
+
+.control-panel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 10%; right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
 }
 
 .trap-selection { width: 100%; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -738,10 +1018,12 @@ input[type="text"]:focus {
 }
 
 .finish-screen h2 {
+  font-family: 'Shippori Mincho', serif;
+  font-weight: 700;
   font-size: 1.6rem;
   color: #c9a84c;
   margin-bottom: 16px;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
 }
 
 .finish-ranking {
@@ -1131,6 +1413,129 @@ input[type="text"]:focus {
   100% { filter: hue-rotate(360deg) brightness(1); }
 }
 
+/* ========= Chat ========= */
+.chat-log {
+  max-height: 52px;
+  overflow-y: auto;
+  border-top: 1px solid #2a1e12;
+  padding-top: 5px;
+  margin-top: 5px;
+}
+
+.chat-entry {
+  padding: 2px 0;
+  font-size: 0.73rem;
+  color: #9a8a78;
+  line-height: 1.35;
+}
+
+.chat-name { font-weight: bold; }
+
+.chat-input-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  border-top: 1px solid #2a1e12;
+  padding-top: 6px;
+}
+
+.chat-input-row input[type="text"] {
+  flex: 1;
+  padding: 5px 8px;
+  font-size: 0.76rem;
+  width: auto;
+  border-color: #3a2818;
+  background: #140e08;
+  min-width: 0;
+}
+
+.chat-input-row input[type="text"]:focus {
+  border-color: #5a3a20;
+  box-shadow: none;
+}
+
+.btn-chat-send {
+  padding: 5px 9px;
+  background: #1e1409;
+  border: 1px solid #4a3018;
+  border-radius: 6px;
+  color: #c9a84c;
+  cursor: pointer;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.btn-chat-send:hover { background: #2e1c0c; }
+
+/* ========= Turn Announcement ========= */
+.turn-announcement {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(10, 7, 3, 0.93);
+  border: 1.5px solid #c9a84c;
+  border-radius: 12px;
+  padding: 16px 40px;
+  font-size: 1.25rem;
+  font-weight: bold;
+  font-family: 'Shippori Mincho', serif;
+  color: #c9a84c;
+  letter-spacing: 3px;
+  white-space: nowrap;
+  z-index: 350;
+  pointer-events: none;
+  box-shadow: 0 6px 36px rgba(0,0,0,0.88), 0 0 20px rgba(201,168,76,0.12);
+  animation: turnIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.turn-announcement.is-my-turn {
+  border-color: #f0d878;
+  border-width: 2px;
+  color: #f0d878;
+  font-size: 1.5rem;
+  padding: 18px 48px;
+  box-shadow: 0 6px 36px rgba(0,0,0,0.88), 0 0 36px rgba(240,216,120,0.32);
+}
+
+.turn-announcement.fade-out {
+  animation: turnOut 0.4s ease forwards;
+}
+
+@keyframes turnIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.82); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes turnOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to   { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+/* ========= Chat Toast ========= */
+.chat-toast {
+  position: fixed;
+  bottom: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(22, 14, 8, 0.94);
+  border: 1px solid #3d2b1a;
+  border-radius: 10px;
+  padding: 8px 18px;
+  font-size: 0.85rem;
+  color: #e8dcc8;
+  z-index: 190;
+  max-width: 85%;
+  text-align: center;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: notifIn 0.2s ease;
+}
+.chat-toast.hidden { display: none; }
+
 /* ========= Trap Guide Button ========= */
 .btn-trap-guide {
   background: none;
@@ -1231,6 +1636,170 @@ input[type="text"]:focus {
   margin-top: 2px;
 }
 
+/* ========= Lobby Footer ========= */
+.lobby-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #2d1f10;
+}
+
+.btn-info {
+  background: none;
+  border: 1px solid #3d2b1a;
+  border-radius: 6px;
+  color: #6a5040;
+  font-size: 0.74rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.btn-info:hover { color: #c9a84c; border-color: #6a4a20; background: #1e1408; }
+
+.version-badge {
+  font-size: 0.7rem;
+  color: #4a3828;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border: 1px solid #2a1e12;
+  border-radius: 10px;
+}
+
+/* ========= Info Modals (遊び方 / 更新情報) ========= */
+.info-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.info-modal.hidden { display: none; }
+
+.info-modal-inner {
+  background: linear-gradient(160deg, #201812, #1c1510);
+  border: 1px solid #3d2b1a;
+  border-radius: 14px;
+  padding: 20px 22px;
+  max-width: 400px;
+  width: 100%;
+  max-height: 82vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.88);
+  position: relative;
+}
+
+.info-modal-inner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 14px 14px 0 0;
+  background: linear-gradient(90deg, transparent, #c9a84c 40%, #c9a84c 60%, transparent);
+}
+
+.info-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.info-modal-title {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #c9a84c;
+  letter-spacing: 1px;
+}
+
+.info-modal-body {
+  color: #b8a888;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+/* How-to-play styles */
+.howto-section {
+  margin-bottom: 16px;
+}
+
+.howto-heading {
+  font-size: 0.82rem;
+  font-weight: bold;
+  color: #c9a84c;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #2d1f10;
+}
+
+.howto-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 7px;
+}
+
+.howto-num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3a2510;
+  border: 1px solid #c9a84c;
+  color: #c9a84c;
+  font-size: 0.7rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.howto-list {
+  padding-left: 16px;
+  margin: 4px 0;
+  color: #a09080;
+}
+.howto-list li { margin-bottom: 4px; }
+
+.howto-note {
+  font-size: 0.74rem;
+  color: #6a5540;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Changelog styles */
+.changelog-entry {
+  margin-bottom: 16px;
+}
+
+.changelog-ver {
+  font-size: 0.92rem;
+  font-weight: bold;
+  color: #c9a84c;
+  margin-bottom: 6px;
+}
+
+.changelog-date {
+  font-size: 0.74rem;
+  color: #7a6050;
+  font-weight: normal;
+  margin-left: 6px;
+}
+
+.changelog-list {
+  padding-left: 16px;
+  color: #a09080;
+}
+.changelog-list li { margin-bottom: 4px; }
+
 /* ========= Responsive ========= */
 @media (max-width: 720px) {
   #screen-game {
@@ -1240,19 +1809,51 @@ input[type="text"]:focus {
 
   .game-layout {
     flex-direction: column;
-    overflow: visible;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .board-wrapper {
+    width: 100%;
+    max-width: 100%;
+    justify-content: flex-start;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .board-container {
+    margin: 0;
   }
 
   .side-panel {
     width: 100%;
-    flex-direction: row;
-    max-height: 160px;
+    flex-direction: column;
+    max-height: none;
+    overflow: visible;
+    gap: 10px;
+  }
+
+  .players-panel {
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .log-panel {
+    width: 100%;
+    max-height: 280px;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 
-  .players-panel { width: 44%; }
-  .log-panel { flex: 1; overflow: hidden; }
-  #game-log { max-height: 120px; }
+  #game-log {
+    max-height: 120px;
+  }
+
+  .chat-log {
+    max-height: 100px;
+  }
 
   .player-token { width: 18px; height: 18px; }
 
@@ -1264,14 +1865,26 @@ input[type="text"]:focus {
 }
 
 @media (max-width: 480px) {
-  .lobby-container,
-  .waiting-container {
-    padding: 28px 20px;
+  #screen-lobby.active,
+  #screen-waiting.active {
+    justify-content: flex-start;
+    padding: 12px 0;
+    overflow-y: auto;
   }
 
-  .game-header { padding: 8px 10px; }
-  .phase-indicator { font-size: 0.88rem; }
-  .round-indicator { font-size: 0.75rem; }
+  .lobby-container,
+  .waiting-container {
+    padding: 24px 18px;
+    margin: 0 auto;
+  }
+
+  .game-header {
+    padding: 7px 10px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .phase-indicator { font-size: 0.84rem; }
+  .round-indicator { font-size: 0.72rem; }
 
   .cell-label { font-size: 0.65rem; }
   .player-token { width: 16px; height: 16px; }
@@ -1280,4 +1893,529 @@ input[type="text"]:focus {
   .control-panel { padding: 10px 12px; min-height: 70px; }
   .trap-selection-title { font-size: 0.75rem; }
   .trap-card-name { font-size: 0.9rem; }
+
+  .chat-log { max-height: 80px; }
+  .chat-input-row input[type="text"] { font-size: 0.72rem; }
+
+  .size-selector { gap: 4px; }
+  .size-btn, .round-btn { padding: 5px 10px; font-size: 0.8rem; }
+}
+
+/* ========================================================
+   大型アップデート（第1弾）：3分岐ルート & 手札3枚制 & 看板進路選択
+   ======================================================== */
+
+/* --- 街道ごとのマス目ハイライト --- */
+.board-cell.route-a {
+  background: linear-gradient(135deg, #4f222b 0%, #36161c 60%, #210d10 100%);
+  border-color: #a36573;
+  box-shadow: 
+    0 4px 6px -1px rgba(0,0,0,0.65), 
+    inset 0 2px 2px rgba(255,255,255,0.1), 
+    inset 0 -3px 3px rgba(0,0,0,0.5);
+}
+.board-cell.route-a .cell-label {
+  color: #e8a7b5;
+}
+
+.board-cell.route-b {
+  background: linear-gradient(135deg, #1d3d24 0%, #122616 60%, #0a170d 100%);
+  border-color: #559465;
+  box-shadow: 
+    0 4px 6px -1px rgba(0,0,0,0.65), 
+    inset 0 2px 2px rgba(255,255,255,0.1), 
+    inset 0 -3px 3px rgba(0,0,0,0.5);
+}
+.board-cell.route-b .cell-label {
+  color: #7cd190;
+}
+
+.board-cell.route-c {
+  background: linear-gradient(135deg, #241d4a 0%, #16122d 60%, #0d0a1c 100%);
+  border-color: #6555ab;
+  box-shadow: 
+    0 4px 6px -1px rgba(0,0,0,0.65), 
+    inset 0 2px 2px rgba(255,255,255,0.1), 
+    inset 0 -3px 3px rgba(0,0,0,0.5);
+}
+.board-cell.route-c .cell-label {
+  color: #9e8be8;
+}
+
+/* --- 進路選択 (道標) --- */
+.route-selector-wrap {
+  background: #18110b;
+  border: 1px solid #3d2b1a;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+}
+.route-selector-label {
+  font-size: 0.78rem;
+  color: #8a7060;
+  font-weight: bold;
+  font-family: 'Shippori Mincho', serif;
+  text-align: left;
+}
+.route-selector-btns {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.route-select-btn {
+  flex: 1;
+  padding: 8px 6px;
+  font-size: 0.78rem;
+  font-weight: bold;
+  font-family: 'Shippori Mincho', serif;
+  border: 1.5px dashed #5a4030;
+  border-radius: 4px;
+  background: #231810;
+  color: #a08878;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.route-select-btn:hover {
+  background: #2d1f15;
+  border-color: #8a6550;
+  color: #c8b0a0;
+}
+.route-select-btn.selected {
+  background: #3e2818;
+  border: 1.5px solid #c9a84c;
+  color: #f0e0d0;
+  box-shadow: 0 0 8px rgba(201,168,76,0.3);
+}
+.route-select-btn.route-btn-a.selected {
+  border-color: #e8a7b5;
+  box-shadow: 0 0 8px rgba(232,167,181,0.3);
+}
+.route-select-btn.route-btn-b.selected {
+  border-color: #7cd190;
+  box-shadow: 0 0 8px rgba(124,209,144,0.3);
+}
+.route-select-btn.route-btn-c.selected {
+  border-color: #9e8be8;
+  box-shadow: 0 0 8px rgba(158,139,232,0.3);
+}
+
+/* --- 手札 (木札風仕掛け札) --- */
+.trap-cards-container {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  margin: 8px 0;
+}
+.assigned-trap-card.hand-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 4px;
+  background: linear-gradient(135deg, #32251a, #20150d);
+  border: 2px solid #5d4533;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.2);
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  position: relative;
+  min-height: 90px;
+}
+.assigned-trap-card.hand-card:hover {
+  transform: translateY(-4px);
+  border-color: #c9a84c;
+  box-shadow: 0 4px 12px rgba(201,168,76,0.25);
+}
+.assigned-trap-card.hand-card.selected {
+  background: linear-gradient(135deg, #443224, #2a1c12);
+  border: 2px solid #f0d878;
+  box-shadow: 0 0 12px 2px rgba(240,216,120,0.45);
+  transform: translateY(-2px);
+}
+.assigned-trap-card.hand-card .trap-card-emoji {
+  font-size: 1.5rem;
+  margin-bottom: 4px;
+}
+.assigned-trap-card.hand-card .trap-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.assigned-trap-card.hand-card .trap-card-name {
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: #e8dcc8;
+  font-family: 'Shippori Mincho', serif;
+}
+.assigned-trap-card.hand-card .trap-card-desc {
+  font-size: 0.6rem;
+  color: #8c7c6c;
+  line-height: 1.2;
+}
+.assigned-trap-card.hand-card.selected .trap-card-name {
+  color: #f0d878;
+}
+
+/* プレイヤーリストの進路バッジ */
+.p-route-badge {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 0.85rem;
+  vertical-align: middle;
+}
+
+/* ========================================================
+   v2.5 グラフィック＆ビジュアル改善
+   ======================================================== */
+
+/* --- 畳（Tatami）背景と額縁漆塗りデザイン --- */
+.board-wrapper {
+  background-color: #312b18;
+  /* 畳織り目のパターン */
+  background-image: 
+    repeating-linear-gradient(90deg, #38311b, #38311b 2px, #2a2514 2px, #2a2514 4px);
+  border: 4px solid #0f0a05;
+  box-shadow: 
+    inset 0 4px 20px rgba(0,0,0,0.8),
+    0 8px 32px rgba(0,0,0,0.7);
+  position: relative;
+  padding: 24px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-container {
+  position: relative;
+  display: inline-block;
+  padding: 12px;
+  /* 高級輪島漆器・金縁をイメージしたボードフレーム */
+  background: #150f0b;
+  border: 3.5px solid #c9a84c;
+  border-radius: 8px;
+  box-shadow: 
+    0 10px 24px rgba(0,0,0,0.65),
+    inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* --- SVG 街道線（経路オーバーレイ） --- */
+#board-paths-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+}
+
+.board-path-line {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  opacity: 0.62;
+  transition: all 0.5s ease;
+}
+
+.board-path-line.route-common {
+  stroke: #8a7258;
+  stroke-width: 4px;
+  stroke-dasharray: 6 5;
+}
+
+.board-path-line.route-route-a {
+  stroke: #e8a7b5;
+  stroke-width: 4.5px;
+  stroke-dasharray: 4 6;
+}
+
+.board-path-line.route-route-b {
+  stroke: #7cd190;
+  stroke-width: 4.5px;
+  stroke-dasharray: 8 4;
+}
+
+.board-path-line.route-route-c {
+  stroke: #9e8be8;
+  stroke-width: 4.5px;
+  stroke-dasharray: 10 3;
+}
+
+/* 矢印マーカーのカラー */
+.path-arrow-common { fill: #8a7258; }
+.path-arrow-a { fill: #e8a7b5; }
+.path-arrow-b { fill: #7cd190; }
+.path-arrow-c { fill: #9e8be8; }
+
+/* --- 墨絵・墨しぶきパーティクル演出 --- */
+.ink-splash-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 20;
+  overflow: visible;
+}
+
+.ink-blot {
+  position: absolute;
+  background-color: #050403;
+  /* じわっとにじむ墨絵フィルタ */
+  filter: blur(1.8px);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.95;
+  transform: scale(0);
+}
+
+.ink-blot.burst {
+  animation: inkBurstAnim 0.8s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+
+@keyframes inkBurstAnim {
+  0% {
+    transform: translate(0, 0) scale(0);
+    opacity: 0.95;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(var(--scale));
+    opacity: 0;
+  }
+}
+
+/* --- サイコロ演出オーバーレイ --- */
+.dice-anim-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(8, 6, 4, 0.86);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+.dice-anim-overlay.hidden {
+  display: none;
+}
+
+.dice-anim-content {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 木製のサイコロ盆 (Tray) */
+.dice-tray {
+  width: 280px;
+  height: 130px;
+  /* 木製漆塗りの盆 */
+  background: radial-gradient(circle, #2e1c12 20%, #160d08 90%);
+  border: 6px solid #422818;
+  border-radius: 50%;
+  box-shadow: 
+    inset 0 12px 24px rgba(0,0,0,0.95),
+    0 10px 25px rgba(0,0,0,0.75);
+  position: absolute;
+  bottom: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding-top: 15px;
+  overflow: visible;
+  /* 盆の中央に少し緑のフエルト（丁半のござ）のニュアンス */
+  background-image: 
+    radial-gradient(ellipse at center, rgba(39,78,30,0.18) 0%, transparent 80%);
+}
+
+/* サイコロ筒 (ちり) */
+.dice-cup-wrap {
+  position: absolute;
+  top: 15px;
+  z-index: 1010;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+}
+
+.dice-cup {
+  width: 76px;
+  height: 110px;
+  /* 木目漆塗りの竹筒デザイン */
+  background: linear-gradient(135deg, #482314, #220e06);
+  border: 2px solid #c9a84c;
+  border-radius: 8px 8px 18px 18px;
+  position: relative;
+}
+
+.dice-cup-rim {
+  width: 100%;
+  height: 8px;
+  background: #c9a84c;
+  position: absolute;
+  bottom: 0;
+  border-radius: 0 0 16px 16px;
+  box-shadow: inset 0 -1px 2px rgba(0,0,0,0.5);
+}
+
+.dice-cup-pattern {
+  position: absolute;
+  top: 28px;
+  left: 6px;
+  width: 64px;
+  height: 44px;
+  border: 1px dashed rgba(201,168,76,0.35);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dice-cup-pattern::after {
+  content: '道';
+  font-family: 'Shippori Mincho', serif;
+  font-size: 15px;
+  color: rgba(201,168,76,0.5);
+  font-weight: bold;
+}
+
+/* 筒のシェイクアニメーション */
+.dice-cup-wrap.shake {
+  animation: cupShakeAnim 0.75s ease-in-out infinite;
+}
+
+@keyframes cupShakeAnim {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  12% { transform: translateY(-12px) rotate(-18deg); }
+  25% { transform: translateY(-6px) rotate(18deg); }
+  37% { transform: translateY(-14px) rotate(-22deg); }
+  50% { transform: translateY(-4px) rotate(22deg); }
+  62% { transform: translateY(-16px) rotate(-12deg); }
+  75% { transform: translateY(-6px) rotate(16deg); }
+  87% { transform: translateY(-10px) rotate(-6deg); }
+}
+
+/* 筒の持ち上げ・転がり出しアニメーション */
+.dice-cup-wrap.rollout {
+  animation: cupRolloutAnim 1.1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes cupRolloutAnim {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  30% { transform: translateY(-80px) rotate(-50deg); opacity: 1; }
+  70% { transform: translateY(-130px) rotate(-95deg) scale(0.9); opacity: 0.8; }
+  100% { transform: translateY(-180px) rotate(-115deg) scale(0.7); opacity: 0; }
+}
+
+/* 木製立体風サイコロ */
+.wood-dice {
+  width: 44px;
+  height: 44px;
+  background: #f4edd9; /* 和紙・木製に近いアイボリー */
+  border: 2px solid #5d4233;
+  border-radius: 8px;
+  box-shadow: 
+    3px 4px 8px rgba(0,0,0,0.6),
+    inset -3px -3px 6px rgba(0,0,0,0.18),
+    inset 3px 3px 6px rgba(255,255,255,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  user-select: none;
+  opacity: 0;
+}
+
+.wood-dice.roll {
+  animation: diceRollBounceAnim 0.85s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+/* サイコロのバウンド・転がり */
+@keyframes diceRollBounceAnim {
+  0% { 
+    transform: translate(-40px, -90px) rotate(-180deg) scale(0.4); 
+    opacity: 0; 
+  }
+  45% { 
+    transform: translate(10px, 12px) rotate(45deg) scale(1.1); 
+    opacity: 1; 
+  }
+  65% { 
+    transform: translate(-4px, -18px) rotate(-20deg) scale(1); 
+  }
+  80% { 
+    transform: translate(2px, 4px) rotate(10deg) scale(1); 
+  }
+  100% { 
+    transform: translate(0, 0) rotate(0deg) scale(1); 
+    opacity: 1;
+  }
+}
+
+/* 和風サイコロの目のデザイン */
+.wood-dice-face {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1510;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 1の目だけ赤く大きくする（日本のサイコロの伝統） */
+.wood-dice.face-1 .wood-dice-face {
+  color: #c0392b;
+  font-size: 2.6rem;
+}
+
+/* 大筒花火の発動エフェクト */
+.trap-reveal-fireworks .trap-reveal-emoji {
+  animation: emojiFireworks 1.3s cubic-bezier(0.15, 0.85, 0.35, 1.2) forwards;
+  text-shadow: 0 0 10px #f39c12, 0 0 20px #e74c3c, 0 0 30px #9b59b6;
+}
+
+@keyframes emojiFireworks {
+  0% { transform: scale(0.3) rotate(0deg); filter: brightness(1.5) hue-rotate(0deg); }
+  40% { transform: scale(1.65) rotate(180deg); filter: brightness(2) hue-rotate(120deg); }
+  70% { transform: scale(1.15) rotate(320deg); filter: brightness(1.3) hue-rotate(240deg); }
+  100% { transform: scale(1) rotate(360deg); filter: brightness(1) hue-rotate(360deg); }
+}
+
+/* 盤面ラッパー用のカスタムスクロールバー（スマホでの視認性向上） */
+.board-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+.board-wrapper::-webkit-scrollbar-track {
+  background: #120b06;
+  border-radius: 3px;
+}
+.board-wrapper::-webkit-scrollbar-thumb {
+  background: #c9a84c;
+  border-radius: 3px;
+  box-shadow: 0 0 4px rgba(201,168,76,0.3);
 }
