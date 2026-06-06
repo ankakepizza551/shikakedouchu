@@ -1800,106 +1800,6 @@ input[type="text"]:focus {
 }
 .changelog-list li { margin-bottom: 4px; }
 
-/* ========= Responsive ========= */
-@media (max-width: 720px) {
-  #screen-game {
-    padding: 8px;
-    overflow-y: auto;
-  }
-
-  .game-layout {
-    flex-direction: column;
-    overflow: hidden;
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .board-wrapper {
-    width: 100%;
-    max-width: 100%;
-    justify-content: flex-start;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .board-container {
-    margin: 0;
-  }
-
-  .side-panel {
-    width: 100%;
-    flex-direction: column;
-    max-height: none;
-    overflow: visible;
-    gap: 10px;
-  }
-
-  .players-panel {
-    width: 100%;
-    flex-shrink: 0;
-  }
-
-  .log-panel {
-    width: 100%;
-    max-height: 280px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  #game-log {
-    max-height: 120px;
-  }
-
-  .chat-log {
-    max-height: 100px;
-  }
-
-  .player-token { width: 18px; height: 18px; }
-
-  .dice-section { flex-wrap: wrap; justify-content: center; gap: 12px; }
-  .btn-dice { padding: 12px 20px; font-size: 1rem; }
-
-  .trap-selection { gap: 10px; }
-  .assigned-trap-card { padding: 8px 14px; }
-}
-
-@media (max-width: 480px) {
-  #screen-lobby.active,
-  #screen-waiting.active {
-    justify-content: flex-start;
-    padding: 12px 0;
-    overflow-y: auto;
-  }
-
-  .lobby-container,
-  .waiting-container {
-    padding: 24px 18px;
-    margin: 0 auto;
-  }
-
-  .game-header {
-    padding: 7px 10px;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  .phase-indicator { font-size: 0.84rem; }
-  .round-indicator { font-size: 0.72rem; }
-
-  .cell-label { font-size: 0.65rem; }
-  .player-token { width: 16px; height: 16px; }
-  .trap-indicator { font-size: 0.65rem; }
-
-  .control-panel { padding: 10px 12px; min-height: 70px; }
-  .trap-selection-title { font-size: 0.75rem; }
-  .trap-card-name { font-size: 0.9rem; }
-
-  .chat-log { max-height: 80px; }
-  .chat-input-row input[type="text"] { font-size: 0.72rem; }
-
-  .size-selector { gap: 4px; }
-  .size-btn, .round-btn { padding: 5px 10px; font-size: 0.8rem; }
-}
 
 /* ========================================================
    大型アップデート（第1弾）：3分岐ルート & 手札3枚制 & 看板進路選択
@@ -2418,4 +2318,106 @@ input[type="text"]:focus {
   background: #c9a84c;
   border-radius: 3px;
   box-shadow: 0 0 4px rgba(201,168,76,0.3);
+}
+
+/* ========= Responsive ========= */
+@media (max-width: 720px) {
+  #screen-game {
+    padding: 8px;
+    overflow-y: auto;
+  }
+
+  .game-layout {
+    flex-direction: column;
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .board-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .board-container {
+    margin: 0 !important;
+  }
+
+  .side-panel {
+    width: 100%;
+    flex-direction: column;
+    max-height: none;
+    overflow: visible;
+    gap: 10px;
+  }
+
+  .players-panel {
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .log-panel {
+    width: 100%;
+    max-height: 280px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  #game-log {
+    max-height: 120px;
+  }
+
+  .chat-log {
+    max-height: 100px;
+  }
+
+  .player-token { width: 18px; height: 18px; }
+
+  .dice-section { flex-wrap: wrap; justify-content: center; gap: 12px; }
+  .btn-dice { padding: 12px 20px; font-size: 1rem; }
+
+  .trap-selection { gap: 10px; }
+  .assigned-trap-card { padding: 8px 14px; }
+}
+
+@media (max-width: 480px) {
+  #screen-lobby.active,
+  #screen-waiting.active {
+    justify-content: flex-start;
+    padding: 12px 0;
+    overflow-y: auto;
+  }
+
+  .lobby-container,
+  .waiting-container {
+    padding: 24px 18px;
+    margin: 0 auto;
+  }
+
+  .game-header {
+    padding: 7px 10px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .phase-indicator { font-size: 0.84rem; }
+  .round-indicator { font-size: 0.72rem; }
+
+  .cell-label { font-size: 0.65rem; }
+  .player-token { width: 16px; height: 16px; }
+  .trap-indicator { font-size: 0.65rem; }
+
+  .control-panel { padding: 10px 12px; min-height: 70px; }
+  .trap-selection-title { font-size: 0.75rem; }
+  .trap-card-name { font-size: 0.9rem; }
+
+  .chat-log { max-height: 80px; }
+  .chat-input-row input[type="text"] { font-size: 0.72rem; }
+
+  .size-selector { gap: 4px; }
+  .size-btn, .round-btn { padding: 5px 10px; font-size: 0.8rem; }
 }
