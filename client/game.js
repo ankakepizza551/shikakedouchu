@@ -1,17 +1,16 @@
 const socket = io();
 
 const TRAP_DEFS = [
-  { type: 'pitfall',    emoji: '💀', name: '落とし穴',    desc: '3マス戻す' },
-  { type: 'blockade',   emoji: '🚧', name: '通せんぼ',    desc: '次ターンお休み' },
-  { type: 'headwind',   emoji: '💨', name: '逆風',        desc: '次サイコロ半減' },
-  { type: 'swap',       emoji: '🔄', name: '入れ替え',    desc: '設置者と位置交換' },
-  { type: 'redice',     emoji: '🎲', name: 'サイコロ返し', desc: '再振りして戻る' },
-  { type: 'chain',      emoji: '🔗', name: '連鎖',        desc: '次ターン連鎖を強制配置' },
-  { type: 'involveAll', emoji: '🌪️', name: '全員巻き込み', desc: '他の全員が2マス戻る' },
-  { type: 'random',     emoji: '❓', name: 'ランダム',    desc: '効果は発動まで謎！' },
-  { type: 'wander',     emoji: '🌀', name: 'ランダム移動', desc: '±1〜2マスランダム' },
-  { type: 'gather',     emoji: '📣', name: '全員集合',    desc: '射程内の全員が設置者のマスへ' },
+  { type: 'pitfall',    emoji: '🕳️', name: '落とし穴',    desc: '4マス戻る' },
+  { type: 'blockade',   emoji: '🚧', name: '関所',        desc: '次の1ターンお休み' },
+  { type: 'headwind',   emoji: '🌪️', name: '辻風',        desc: '次のサイコロの出目が1になる' },
+  { type: 'swap',       emoji: '👥', name: '影武者',      desc: '設置者と位置を交換する' },
+  { type: 'magnet',     emoji: '🧲', name: '引導石',      desc: '最も近い他プレイヤーと同じマスへ引き寄せる' },
+  { type: 'torrent',    emoji: '🌊', name: '急流',        desc: '前方に3マス進む' },
+  { type: 'involveAll', emoji: '🏚️', name: '大崩れ',      desc: '他の全員を2マス戻る' },
+  { type: 'gather',     emoji: '📣', name: '呼び子',      desc: '射程内の全員を設置者のマスへ集める' },
   { type: 'fireworks',  emoji: '🎆', name: '大筒花火',    desc: '発動マスと隣接マスの全員を巻き込み後退' },
+  { type: 'random',     emoji: '❓', name: '千両箱',      desc: '何が起きるかはお楽しみ！' },
 ];
 
 // ========= Board Layouts =========
@@ -490,11 +489,10 @@ const SFX = {
       blockade:   () => { tone(200,'square',0.22,0.5); tone(160,'square',0.14,0.3,0.12); },
       headwind:   () => { for (let i=0;i<6;i++) tone(220-i*12,'sawtooth',0.1,0.22,i*0.05); },
       swap:       () => { [700,500,700].forEach((f,i)=>tone(f,'sine',0.09,0.4,i*0.1)); },
-      redice:     () => { [350,280,200].forEach((f,i)=>tone(f,'square',0.1,0.38,i*0.09)); },
-      chain:      () => { [300,380,460,540].forEach((f,i)=>tone(f,'triangle',0.14,0.35,i*0.07)); },
+      magnet:     () => { [300,450,600,750].forEach((f,i)=>tone(f,'triangle',0.12,0.45,i*0.08)); },
+      torrent:    () => { for (let i=0;i<8;i++) tone(400-i*30,'sine',0.08,0.2,i*0.05); },
       involveAll: () => { tone(180,'sawtooth',0.35,0.6); for (let i=0;i<4;i++) tone(140+i*15,'sawtooth',0.14,0.3,0.1+i*0.07); },
       random:     () => { for (let i=0;i<7;i++) tone(200+Math.random()*700,'sine',0.09,0.28,i*0.06); },
-      wander:     () => { [350,280,420,300].forEach((f,i)=>tone(f,'sine',0.1,0.32,i*0.08)); },
       gather:     () => { [400,480,560,640,560].forEach((f,i)=>tone(f,'sine',0.13,0.42,i*0.08)); },
       fireworks:  () => {
         tone(600, 'sawtooth', 0.2, 0.4);
@@ -1114,14 +1112,19 @@ async function animateTrapEffect(r, rollerId = state.myId) {
     });
   } else {
     const token = document.querySelector(`.player-token[data-pid="${rollerId}"]`);
-    if (token) addTokenAnim(token, `anim-trap-${base}`);
+    if (token) {
+      let animClass = `anim-trap-${base}`;
+      if (base === 'magnet') animClass = 'anim-trap-swap';
+      if (base === 'torrent') animClass = 'anim-trap-shake';
+      addTokenAnim(token, animClass);
+    }
   }
 
   await sleep(1300);
 
   if (state.room) {
-    // 単体移動系: roller のみ後退
-    const singleMoveTypes = ['pitfall', 'redice', 'swap-fail', 'gather-fail', 'wander'];
+    // 単体移動系: roller のみ移動
+    const singleMoveTypes = ['pitfall', 'swap-fail', 'gather-fail', 'magnet-fail', 'magnet', 'torrent'];
     if (singleMoveTypes.includes(r.type) && r.oldPos !== undefined && r.newPos !== undefined && r.oldPos !== r.newPos) {
       const tempPlayers = state.room.players.map(p => ({ ...p }));
       const tempRoom = { ...state.room, players: tempPlayers };
@@ -1360,79 +1363,60 @@ function renderControls(room) {
 }
 
 function renderTrapSelection(panel, room) {
-  const isChain = !!room.myForcedTrapType;
-
   const wrap = document.createElement('div');
   wrap.className = 'trap-selection';
 
   // ヘッダー
   const header = document.createElement('div');
   header.className = 'trap-selection-title';
-  header.textContent = isChain
-    ? '🔗 連鎖中！仕掛け「連鎖」を強制配置します'
-    : '手札から配置する仕掛けを選択してください';
+  header.textContent = '手札から配置する仕掛けを選択してください';
   wrap.appendChild(header);
 
-  if (isChain) {
-    // 強制配置される連鎖トラップカード
+  // 手札3枚表示
+  const cardsContainer = document.createElement('div');
+  cardsContainer.className = 'trap-cards-container';
+
+  const hand = room.myHand || [];
+  
+  // 現在選択されているトラップが手札に無ければリセット
+  if (state.selectedTrapType && !hand.includes(state.selectedTrapType)) {
+    state.selectedTrapType = null;
+  }
+
+  hand.forEach(type => {
+    const def = TRAP_DEFS.find(t => t.type === type);
+    if (!def) return;
+    
     const card = document.createElement('div');
-    card.className = 'assigned-trap-card hand-card selected';
-    const def = TRAP_DEFS.find(t => t.type === 'chain');
+    card.className = 'assigned-trap-card hand-card';
+    if (state.selectedTrapType === type) {
+      card.classList.add('selected');
+    }
     card.innerHTML = `
-      <span class="trap-card-emoji">${def?.emoji || '🔗'}</span>
+      <span class="trap-card-emoji">${def.emoji}</span>
       <div class="trap-card-info">
-        <div class="trap-card-name">${def?.name || '連鎖'}</div>
-        <div class="trap-card-desc">${def?.desc || ''}</div>
+        <div class="trap-card-name">${def.name}</div>
+        <div class="trap-card-desc">${def.desc}</div>
       </div>
     `;
-    wrap.appendChild(card);
-  } else {
-    // 手札3枚表示
-    const cardsContainer = document.createElement('div');
-    cardsContainer.className = 'trap-cards-container';
-
-    const hand = room.myHand || [];
-    
-    // 現在選択されているトラップが手札に無ければリセット
-    if (state.selectedTrapType && !hand.includes(state.selectedTrapType)) {
-      state.selectedTrapType = null;
-    }
-
-    hand.forEach(type => {
-      const def = TRAP_DEFS.find(t => t.type === type);
-      if (!def) return;
-      
-      const card = document.createElement('div');
-      card.className = 'assigned-trap-card hand-card';
+    card.addEventListener('click', () => {
+      SFX.step();
       if (state.selectedTrapType === type) {
-        card.classList.add('selected');
+        state.selectedTrapType = null;
+      } else {
+        state.selectedTrapType = type;
       }
-      card.innerHTML = `
-        <span class="trap-card-emoji">${def.emoji}</span>
-        <div class="trap-card-info">
-          <div class="trap-card-name">${def.name}</div>
-          <div class="trap-card-desc">${def.desc}</div>
-        </div>
-      `;
-      card.addEventListener('click', () => {
-        SFX.step();
-        if (state.selectedTrapType === type) {
-          state.selectedTrapType = null;
-        } else {
-          state.selectedTrapType = type;
-        }
-        renderBoard(room); // 盤面の配置ハイライトを更新
-        renderTrapSelection(panel, room); // 手札の選択表示を更新
-      });
-      cardsContainer.appendChild(card);
+      renderBoard(room); // 盤面の配置ハイライトを更新
+      renderTrapSelection(panel, room); // 手札の選択表示を更新
     });
-    wrap.appendChild(cardsContainer);
-  }
+    cardsContainer.appendChild(card);
+  });
+  wrap.appendChild(cardsContainer);
 
   // 配置指示
   const hint = document.createElement('div');
   hint.className = 'trap-placement-hint';
-  const activeSelected = isChain ? 'chain' : state.selectedTrapType;
+  const activeSelected = state.selectedTrapType;
   if (activeSelected) {
     hint.textContent = '👆 スタートとゴールを除く、盤面のいずれかのマスをクリックして設置';
   } else {

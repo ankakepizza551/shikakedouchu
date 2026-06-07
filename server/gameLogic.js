@@ -1,17 +1,16 @@
 const VALID_BOARD_SIZES = [15, 20, 30];
-const TRAP_TYPES = ['pitfall', 'blockade', 'headwind', 'swap', 'redice', 'chain', 'involveAll', 'random', 'wander', 'gather', 'fireworks'];
+const TRAP_TYPES = ['pitfall', 'blockade', 'headwind', 'swap', 'magnet', 'torrent', 'involveAll', 'gather', 'fireworks', 'random'];
 const TRAP_NAMES = {
   pitfall:    '落とし穴',
-  blockade:   '通せんぼ',
-  headwind:   '逆風',
-  swap:       '入れ替え',
-  redice:     'サイコロ返し',
-  chain:      '連鎖',
-  involveAll: '全員巻き込み',
-  random:     'ランダム',
-  wander:     'ランダム移動',
-  gather:     '全員集合',
+  blockade:   '関所',
+  headwind:   '辻風',
+  swap:       '影武者',
+  magnet:     '引導石',
+  torrent:    '急流',
+  involveAll: '大崩れ',
+  gather:     '呼び子',
   fireworks:  '大筒花火',
+  random:     '千両箱',
 };
 const PLAYER_COLORS = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f'];
 const RANDOM_POOL = TRAP_TYPES.filter(t => t !== 'random');
@@ -263,10 +262,9 @@ function createPlayer(id, name, colorIndex) {
     position: '0',
     color: PLAYER_COLORS[colorIndex % PLAYER_COLORS.length],
     skipNextTurn: false,
-    halfDice: false,
+    forcedRollOne: false,
     finished: false,
     finishRank: null,
-    chainTrapType: null,
     hand: [getRandomTrap(), getRandomTrap(), getRandomTrap()],
     preferredBranch: 'B',
   };
@@ -337,7 +335,6 @@ function startGame(roomCode) {
     p.position = '0';
     p.finished = false;
     p.finishRank = null;
-    p.chainTrapType = null;
   }
 
   addLog(room, 'ゲームスタート！まず仕掛けを配置してください。');
@@ -386,19 +383,14 @@ function placeTrap(socketId, square, trapType) {
     return { error: '存在しないマスです' };
   }
 
-  let finalTrapType = trapType;
-  if (player.chainTrapType) {
-    finalTrapType = 'chain';
-    player.chainTrapType = null;
-  } else {
-    if (!player.hand || !player.hand.includes(trapType)) {
-      return { error: '指定された仕掛けを手札に持っていません' };
-    }
-    const idx = player.hand.indexOf(trapType);
-    if (idx !== -1) {
-      player.hand.splice(idx, 1);
-    }
+  if (!player.hand || !player.hand.includes(trapType)) {
+    return { error: '指定された仕掛けを手札に持っていません' };
   }
+  const idx = player.hand.indexOf(trapType);
+  if (idx !== -1) {
+    player.hand.splice(idx, 1);
+  }
+  let finalTrapType = trapType;
 
   if (!room.traps[square]) {
     room.traps[square] = [];
@@ -446,10 +438,10 @@ function rollDice(socketId) {
   } else {
     diceResult = Math.floor(Math.random() * 6) + 1;
 
-    if (player.halfDice) {
-      diceResult = Math.max(1, Math.floor(diceResult / 2));
-      player.halfDice = false;
-      addLog(room, `${player.name} は逆風中！サイコロが ${diceResult} に半減`);
+    if (player.forcedRollOne) {
+      diceResult = 1;
+      player.forcedRollOne = false;
+      addLog(room, `${player.name} は辻風中！サイコロの目が強制的に ${diceResult} に固定`);
     }
 
     const oldPosition = player.position;
@@ -585,20 +577,20 @@ function applyTrap(room, player, trap) {
   switch (actualType) {
     case 'pitfall': {
       const oldPos = player.position;
-      player.position = moveBackward(player.position, 3, player.preferredBranch, room.boardSize);
+      player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
       const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
       const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-      addLog(room, `${rp}💀 ${placerName} の「落とし穴」発動！ ${player.name} ${oldLabel}→${newLabel}`);
+      addLog(room, `${rp}🕳️ ${placerName} の「落とし穴」発動！ ${player.name} ${oldLabel}→${newLabel}`);
       return { type: actualType, isRandom, oldPos, newPos: player.position, trapName, placerName };
     }
     case 'blockade': {
       player.skipNextTurn = true;
-      addLog(room, `${rp}🚧 ${placerName} の「通せんぼ」発動！ ${player.name} 次ターンお休み`);
+      addLog(room, `${rp}🚧 ${placerName} の「関所」発動！ ${player.name} 次ターンお休み`);
       return { type: actualType, isRandom, trapName, placerName };
     }
     case 'headwind': {
-      player.halfDice = true;
-      addLog(room, `${rp}💨 ${placerName} の「逆風」発動！ ${player.name} 次サイコロ半減`);
+      player.forcedRollOne = true;
+      addLog(room, `${rp}🌪️ ${placerName} の「辻風」発動！ ${player.name} 次サイコロが 1 に固定`);
       return { type: actualType, isRandom, trapName, placerName };
     }
     case 'swap': {
@@ -609,32 +601,57 @@ function applyTrap(room, player, trap) {
         placer.position = playerOldPos;
         const playerOldLabel = layout.nodes.find(n => n.id === playerOldPos)?.label || playerOldPos;
         const placerOldLabel = layout.nodes.find(n => n.id === placerOldPos)?.label || placerOldPos;
-        addLog(room, `${rp}🔄 ${placerName} の「入れ替え」発動！ ${player.name}(${playerOldLabel})↔${placerName}(${placerOldLabel})`);
+        addLog(room, `${rp}👥 ${placerName} の「影武者」発動！ ${player.name}(${playerOldLabel})↔${placerName}(${placerOldLabel})`);
         return { type: actualType, isRandom, trapName, placerName,
           playerOldPos, playerNewPos: player.position,
           placerId: placer.id, placerOldPos, placerNewPos: placer.position };
       } else {
         const oldPos = player.position;
-        player.position = moveBackward(player.position, 3, player.preferredBranch, room.boardSize);
+        player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
         const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
         const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-        addLog(room, `${rp}🔄 入れ替え相手なし→落とし穴！ ${player.name} ${oldLabel}→${newLabel}`);
+        addLog(room, `${rp}👥 影武者相手なし→落とし穴！ ${player.name} ${oldLabel}→${newLabel}`);
         return { type: 'swap-fail', isRandom, oldPos, newPos: player.position, trapName, placerName };
       }
     }
-    case 'redice': {
-      const penalty = Math.floor(Math.random() * 6) + 1;
+    case 'magnet': {
+      let nearestOpponent = null;
+      let minDistance = Infinity;
+
+      for (const p of room.players) {
+        if (p.id !== player.id && !p.finished) {
+          const dist = getDistance(player.position, p.position, room.boardSize);
+          if (dist < minDistance) {
+            minDistance = dist;
+            nearestOpponent = p;
+          }
+        }
+      }
+
+      if (nearestOpponent) {
+        const oldPos = player.position;
+        player.position = nearestOpponent.position;
+        const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
+        const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
+        addLog(room, `${rp}🧲 ${placerName} の「引導石」発動！ ${player.name} は最も近い他プレイヤー ${nearestOpponent.name} のマスへ引き寄せられた！ ${oldLabel}→${newLabel}`);
+        return { type: actualType, isRandom, oldPos, newPos: player.position, targetPlayerId: nearestOpponent.id, targetPlayerName: nearestOpponent.name, trapName, placerName };
+      } else {
+        const oldPos = player.position;
+        player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
+        const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
+        const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
+        addLog(room, `${rp}🧲 引導石の引き寄せ相手なし→落とし穴！ ${player.name} ${oldLabel}→${newLabel}`);
+        return { type: 'magnet-fail', isRandom, oldPos, newPos: player.position, trapName, placerName };
+      }
+    }
+    case 'torrent': {
       const oldPos = player.position;
-      player.position = moveBackward(player.position, penalty, player.preferredBranch, room.boardSize);
+      player.position = moveForward(player.position, 3, player.preferredBranch, room.boardSize);
       const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
       const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-      addLog(room, `${rp}🎲 ${placerName} の「サイコロ返し」発動！ ${player.name} さらに${penalty}戻る ${oldLabel}→${newLabel}`);
-      return { type: actualType, isRandom, oldPos, newPos: player.position, penalty, trapName, placerName };
-    }
-    case 'chain': {
-      player.chainTrapType = 'chain';
-      addLog(room, `${rp}🔗 ${placerName} の「連鎖」発動！ ${player.name} 次配置フェーズで連鎖を強制配置！`);
-      return { type: actualType, isRandom, trapName, placerName };
+      addLog(room, `${rp}🌊 ${placerName} の「急流」発動！ ${player.name} は急流に乗って 3マス進んだ！ ${oldLabel}→${newLabel}`);
+      checkGoal(room, player);
+      return { type: actualType, isRandom, oldPos, newPos: player.position, trapName, placerName };
     }
     case 'involveAll': {
       const affectedDetails = [];
@@ -650,32 +667,16 @@ function applyTrap(room, player, trap) {
         const newLbl = layout.nodes.find(n => n.id === a.newPos)?.label || a.newPos;
         return `${a.name}(${oldLbl}→${newLbl})`;
       }).join(', ');
-      addLog(room, `${rp}🌪️ ${placerName} の「全員巻き込み」発動！全員2マス戻る [${descList}]`);
+      addLog(room, `${rp}🌪️ ${placerName} の「大崩れ」発動！全員2マス戻る [${descList}]`);
       return { type: actualType, isRandom, trapName, placerName, rollerPos: player.position, affectedDetails };
-    }
-    case 'wander': {
-      const deltas = [-2, -1, 1, 2];
-      const delta = deltas[Math.floor(Math.random() * deltas.length)];
-      const oldPos = player.position;
-      if (delta > 0) {
-        player.position = moveForward(player.position, delta, player.preferredBranch, room.boardSize);
-      } else {
-        player.position = moveBackward(player.position, -delta, player.preferredBranch, room.boardSize);
-      }
-      const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
-      const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-      const dir = delta > 0 ? `+${delta}` : String(delta);
-      addLog(room, `${rp}🌀 ${placerName} の「ランダム移動」発動！ ${player.name} ${dir}マス (${oldLabel}→${newLabel})`);
-      checkGoal(room, player);
-      return { type: actualType, isRandom, oldPos, newPos: player.position, delta, trapName, placerName };
     }
     case 'gather': {
       if (!placer || placer.finished) {
         const oldPos = player.position;
-        player.position = moveBackward(player.position, 3, player.preferredBranch, room.boardSize);
+        player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
         const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
         const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-        addLog(room, `${rp}📣 全員集合発動→設置者ゴール済みで落とし穴に！ ${player.name} ${oldLabel}→${newLabel}`);
+        addLog(room, `${rp}📣 呼び子発動→設置者ゴール済みで落とし穴に！ ${player.name} ${oldLabel}→${newLabel}`);
         return { type: 'gather-fail', isRandom, oldPos, newPos: player.position, trapName, placerName };
       }
       const gatherPos = placer.position;
@@ -691,7 +692,7 @@ function applyTrap(room, player, trap) {
         }
       }
       if (gatheredDetails.length === 0) {
-        addLog(room, `${rp}📣 全員集合発動！ 射程内（±${gatherRange}マス）のプレイヤーなし`);
+        addLog(room, `${rp}📣 呼び子発動！ 射程内（±${gatherRange}マス）のプレイヤーなし`);
       } else {
         const descList = gatheredDetails.map(a => {
           const oldLbl = layout.nodes.find(n => n.id === a.oldPos)?.label || a.oldPos;
@@ -699,14 +700,13 @@ function applyTrap(room, player, trap) {
           return `${a.name}(${oldLbl}→${newLbl})`;
         }).join(', ');
         const gatherLabel = layout.nodes.find(n => n.id === gatherPos)?.label || gatherPos;
-        addLog(room, `${rp}📣 ${placerName} の「全員集合」発動！${gatherLabel}マスへ [${descList}]`);
+        addLog(room, `${rp}📣 ${placerName} の「呼び子」発動！${gatherLabel}マスへ [${descList}]`);
       }
       return { type: actualType, isRandom, gatherPos, trapName, placerName, gatheredDetails };
     }
     case 'fireworks': {
       const playerOldPos = player.position;
       
-      // 隣接するマス（距離1のマス）を抽出
       const neighbors = new Set([playerOldPos]);
       if (layout) {
         for (const n of layout.nodes) {
@@ -721,10 +721,8 @@ function applyTrap(room, player, trap) {
         }
       }
 
-      // 発動者は直撃を受けて4マス戻る
       player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
       
-      // 同一マスおよび隣接マスにいる他のプレイヤーは爆風で2マス戻る
       const affectedDetails = [];
       for (const p of room.players) {
         if (p.id !== player.id && !p.finished && neighbors.has(p.position)) {
@@ -791,12 +789,7 @@ function advanceAction(room) {
     // トラップを配布
     assignTrapsForRound(room);
 
-    // 連鎖中のプレイヤーを通知
-    for (const p of activePlayers) {
-      if (p.chainTrapType) {
-        addLog(room, `🔗 ${p.name} は連鎖中！${TRAP_NAMES[p.chainTrapType]}が配布されました`);
-      }
-    }
+
     addLog(room, '仕掛けを配置してください。');
 
     // ターン順シャッフル
@@ -935,7 +928,7 @@ function sanitizeRoom(room, forSocketId) {
       position: p.position,
       color: p.color,
       skipNextTurn: p.skipNextTurn,
-      halfDice: p.halfDice,
+      forcedRollOne: p.forcedRollOne,
       finished: p.finished,
       finishRank: p.finishRank,
       preferredBranch: p.preferredBranch,
@@ -946,7 +939,7 @@ function sanitizeRoom(room, forSocketId) {
       : null,
     myPlacedThisRound: room.placedThisRound.has(forSocketId),
     myHand: myPlayer ? myPlayer.hand : [],
-    myForcedTrapType: myPlayer ? myPlayer.chainTrapType : null,
+    myForcedTrapType: null,
     myPreferredRoute: myPlayer ? myPlayer.preferredBranch : 'B',
     waitingForPlacement: room.status === 'placement'
       ? activePlayers.filter(p => !room.placedThisRound.has(p.id)).map(p => p.name)
@@ -963,11 +956,9 @@ function resetRoom(roomCode) {
   room.players.forEach((p, i) => {
     p.position = '0';
     p.skipNextTurn = false;
-    p.halfDice = false;
+    p.forcedRollOne = false;
     p.finished = false;
     p.finishRank = null;
-    p.chainTrapType = null;
-    p.assignedTrap = null;
     p.hand = [getRandomTrap(), getRandomTrap(), getRandomTrap()];
     p.preferredBranch = 'B';
     p.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
