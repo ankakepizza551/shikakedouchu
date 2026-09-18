@@ -236,6 +236,11 @@ function getRandomTrap() {
   return TRAP_TYPES[Math.floor(Math.random() * TRAP_TYPES.length)];
 }
 
+function getRandomHand(size = 3) {
+  const pool = shuffleArray([...TRAP_TYPES]);
+  return pool.slice(0, size);
+}
+
 // ========= ユーティリティ =========
 function shuffleArray(arr) {
   const a = [...arr];
@@ -265,7 +270,7 @@ function createPlayer(id, name, colorIndex) {
     forcedRollOne: false,
     finished: false,
     finishRank: null,
-    hand: [getRandomTrap(), getRandomTrap(), getRandomTrap()],
+    hand: getRandomHand(),
     preferredBranch: 'B',
   };
 }
@@ -330,7 +335,7 @@ function startGame(roomCode) {
 
   // Initialize player hands and position
   for (const p of room.players) {
-    p.hand = [getRandomTrap(), getRandomTrap(), getRandomTrap()];
+    p.hand = getRandomHand();
     p.preferredBranch = 'B';
     p.position = '0';
     p.finished = false;
@@ -349,7 +354,9 @@ function assignTrapsForRound(room) {
   for (const p of room.players) {
     if (p.finished) { p.assignedTrap = null; continue; }
     while (p.hand.length < 3) {
-      p.hand.push(getRandomTrap());
+      const available = TRAP_TYPES.filter(t => !p.hand.includes(t));
+      const pool = available.length > 0 ? available : TRAP_TYPES;
+      p.hand.push(pool[Math.floor(Math.random() * pool.length)]);
     }
   }
 }
@@ -959,7 +966,7 @@ function resetRoom(roomCode) {
     p.forcedRollOne = false;
     p.finished = false;
     p.finishRank = null;
-    p.hand = [getRandomTrap(), getRandomTrap(), getRandomTrap()];
+    p.hand = getRandomHand();
     p.preferredBranch = 'B';
     p.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
   });
