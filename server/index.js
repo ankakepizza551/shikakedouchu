@@ -26,9 +26,9 @@ app.get('/og.png', async (req, res) => {
         <stop offset="100%" stop-color="#1a1008"/>
       </linearGradient>
       <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#f0d878"/>
-        <stop offset="50%" stop-color="#c9a84c"/>
-        <stop offset="100%" stop-color="#edd070"/>
+        <stop offset="0%" stop-color="#e8cf94"/>
+        <stop offset="50%" stop-color="#c3a568"/>
+        <stop offset="100%" stop-color="#dcbf82"/>
       </linearGradient>
     </defs>
     <rect width="1200" height="630" fill="url(#bg)"/>
@@ -37,18 +37,20 @@ app.get('/og.png', async (req, res) => {
     <rect x="0" y="0" width="4" height="630" fill="url(#gold)"/>
     <rect x="1196" y="0" width="4" height="630" fill="url(#gold)"/>
     <g transform="translate(600,200)">
-      <circle cx="0" cy="0" r="90" fill="none" stroke="#c9a84c" stroke-width="2.5"/>
-      <circle cx="0" cy="0" r="76" fill="rgba(201,168,76,0.06)" stroke="#c9a84c" stroke-width="1"/>
-      <polygon points="0,-90 8,-76 0,-62 -8,-76" fill="#c9a84c"/>
-      <polygon points="90,0 76,8 62,0 76,-8" fill="#c9a84c"/>
-      <polygon points="0,90 -8,76 0,62 8,76" fill="#c9a84c"/>
-      <polygon points="-90,0 -76,-8 -62,0 -76,8" fill="#c9a84c"/>
-      <text y="28" text-anchor="middle" font-size="80" fill="#c9a84c" font-family="serif" font-weight="bold">道</text>
+      <circle cx="0" cy="0" r="90" fill="none" stroke="#c3a568" stroke-width="2.5"/>
+      <circle cx="0" cy="0" r="80" fill="none" stroke="#97291c" stroke-width="1.4" stroke-dasharray="3 7" opacity="0.75"/>
+      <circle cx="0" cy="0" r="76" fill="rgba(195,165,104,0.06)" stroke="#c3a568" stroke-width="1"/>
+      <circle cx="0" cy="0" r="46" fill="none" stroke="#97291c" stroke-width="2" opacity="0.32"/>
+      <polygon points="0,-90 8,-76 0,-62 -8,-76" fill="#c3a568"/>
+      <polygon points="90,0 76,8 62,0 76,-8" fill="#c3a568"/>
+      <polygon points="0,90 -8,76 0,62 8,76" fill="#c3a568"/>
+      <polygon points="-90,0 -76,-8 -62,0 -76,8" fill="#c3a568"/>
+      <text y="28" text-anchor="middle" font-size="80" fill="#c3a568" font-family="serif" font-weight="bold">道</text>
     </g>
     <text x="600" y="360" text-anchor="middle" font-size="72" fill="url(#gold)" font-family="serif" font-weight="bold" letter-spacing="16">仕掛け道中</text>
     <text x="600" y="430" text-anchor="middle" font-size="30" fill="#a09070" font-family="serif" letter-spacing="4">罠を仕込みながら進む、読み合いすごろく</text>
-    <rect x="400" y="510" width="400" height="52" rx="26" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-    <text x="600" y="543" text-anchor="middle" font-size="22" fill="#c9a84c" font-family="serif" letter-spacing="2">▶ 最大4人 オンライン対戦</text>
+    <rect x="400" y="510" width="400" height="52" rx="26" fill="none" stroke="#c3a568" stroke-width="1.5"/>
+    <text x="600" y="543" text-anchor="middle" font-size="22" fill="#c3a568" font-family="serif" letter-spacing="2">▶ 最大4人 オンライン対戦</text>
   </svg>`;
 
   if (!sharp) {

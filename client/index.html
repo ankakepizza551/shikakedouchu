@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="罠を仕込みながら進む、読み合いすごろく。最大4人でオンライン対戦！">
   <meta name="twitter:image" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/og.png">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=2.9.1">
+  <link rel="stylesheet" href="style.css?v=3.0.0">
 </head>
 <body>
 
@@ -28,13 +28,19 @@
     <div class="lobby-container">
       <div class="game-logo">
         <svg viewBox="0 0 90 90" width="68" height="68" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="45" cy="45" r="42" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
-          <circle cx="45" cy="45" r="36" fill="rgba(201,168,76,0.04)" stroke="#c9a84c" stroke-width="0.6"/>
-          <path d="M45 3 L49 9 L45 15 L41 9 Z" fill="#c9a84c"/>
-          <path d="M87 45 L81 49 L75 45 L81 41 Z" fill="#c9a84c"/>
-          <path d="M45 87 L41 81 L45 75 L49 81 Z" fill="#c9a84c"/>
-          <path d="M3 45 L9 41 L15 45 L9 49 Z" fill="#c9a84c"/>
-          <text x="45" y="60" text-anchor="middle" font-size="36" fill="#c9a84c" font-weight="700" font-family="'Shippori Mincho', serif">道</text>
+          <circle cx="45" cy="45" r="42" fill="none" stroke="#c3a568" stroke-width="1.4"/>
+          <circle cx="45" cy="45" r="37" fill="none" stroke="#97291c" stroke-width="0.7" stroke-dasharray="1.4 3.2" opacity="0.75"/>
+          <circle cx="45" cy="45" r="32.5" fill="rgba(195,165,104,0.045)" stroke="#c3a568" stroke-width="0.55"/>
+          <circle cx="45" cy="45" r="21" fill="none" stroke="#97291c" stroke-width="1" opacity="0.32"/>
+          <path d="M45 3 L49 9 L45 15 L41 9 Z" fill="#c3a568"/>
+          <path d="M87 45 L81 49 L75 45 L81 41 Z" fill="#c3a568"/>
+          <path d="M45 87 L41 81 L45 75 L49 81 Z" fill="#c3a568"/>
+          <path d="M3 45 L9 41 L15 45 L9 49 Z" fill="#c3a568"/>
+          <circle cx="45" cy="12.5" r="1.3" fill="#97291c"/>
+          <circle cx="77.5" cy="45" r="1.3" fill="#97291c"/>
+          <circle cx="45" cy="77.5" r="1.3" fill="#97291c"/>
+          <circle cx="12.5" cy="45" r="1.3" fill="#97291c"/>
+          <text x="45" y="59" text-anchor="middle" font-size="33" fill="#c3a568" font-weight="700" font-family="'Shippori Mincho', serif">道</text>
         </svg>
       </div>
       <h1 class="game-title">仕掛け道中</h1>
@@ -79,7 +85,7 @@
       </div>
       <div class="lobby-footer">
         <button id="btn-howto" class="btn-info">📜 遊び方</button>
-        <span class="version-badge">v2.0</span>
+        <span class="version-badge">v2.1</span>
         <button id="btn-changelog" class="btn-info">📋 更新情報</button>
       </div>
     </div>
@@ -213,6 +219,14 @@
         <button id="btn-close-changelog" class="btn-close-guide">✕</button>
       </div>
       <div class="info-modal-body">
+        <div class="changelog-entry">
+          <div class="changelog-ver">v2.1 <span class="changelog-date">2026年9月</span></div>
+          <ul class="changelog-list">
+            <li>🎨 <strong>グラフィック一新</strong>：金・朱の配色をより上品な古美色（アンティークゴールド・深朱漆）に見直し、ロゴ・駒・紋様を作り込みました。</li>
+            <li>🀄 <strong>駒デザイン刷新</strong>：碁石風の縁取りと艶を加え、盤上での視認性と質感を向上。</li>
+            <li>🧵 <strong>和紙・籠目文様</strong>：ロビー・待機室にごく薄い織り紋様を追加し、高級感を演出。</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-ver">v2.0 <span class="changelog-date">2026年6月</span></div>
           <ul class="changelog-list">

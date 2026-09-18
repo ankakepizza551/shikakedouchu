@@ -202,10 +202,12 @@ const state = {
   isPrivate: false,
   isAnimating: false,
   selectedTrapType: null,
+  selectedTrapIndex: null,
 };
 
 let pendingRoomUpdate = null;
 let roomListInterval = null;
+let finishScreenShownAt = null;
 let chatMessages = [];
 let chatToastTimer = null;
 
@@ -248,7 +250,7 @@ function playDiceRollAnimation(diceResult, rollerName) {
     // Show name roll announcement in overlay
     const title = document.createElement('div');
     title.className = 'dice-roll-announcement';
-    title.style.cssText = 'position:absolute;top:30px;color:#c9a84c;font-family:"Shippori Mincho",serif;font-size:1.2rem;font-weight:bold;text-shadow:0 2px 4px #000;z-index:1020;';
+    title.style.cssText = 'position:absolute;top:30px;color:#c3a568;font-family:"Shippori Mincho",serif;font-size:1.2rem;font-weight:bold;text-shadow:0 2px 4px #000;z-index:1020;';
     title.textContent = `【${rollerName} の勝負】`;
     overlay.querySelector('.dice-anim-content').appendChild(title);
 
@@ -835,6 +837,7 @@ function applyRoomUpdate(room) {
     (room.status === 'placement' && !room.myPlacedThisRound)
   );
   if (isMyTurn) startCountdown(); else stopCountdown();
+  if (room.status !== 'finished') finishScreenShownAt = null;
   if (room.status === 'lobby') {
     renderWaiting(room);
     showScreen('screen-waiting');
@@ -1035,6 +1038,7 @@ function doPlaceTrap(square) {
     if (error) { startCountdown(); return showError(error); }
     SFX.place();
     state.selectedTrapType = null;
+    state.selectedTrapIndex = null;
     showNotification('仕掛けを設置しました！\n他の人を待っています...', 2000);
   });
 }
@@ -1378,18 +1382,19 @@ function renderTrapSelection(panel, room) {
 
   const hand = room.myHand || [];
   
-  // 現在選択されているトラップが手札に無ければリセット
-  if (state.selectedTrapType && !hand.includes(state.selectedTrapType)) {
+  // 現在選択されているインデックスが手札範囲外になっていればリセット
+  if (state.selectedTrapIndex !== null && state.selectedTrapIndex >= hand.length) {
     state.selectedTrapType = null;
+    state.selectedTrapIndex = null;
   }
 
-  hand.forEach(type => {
+  hand.forEach((type, i) => {
     const def = TRAP_DEFS.find(t => t.type === type);
     if (!def) return;
     
     const card = document.createElement('div');
     card.className = 'assigned-trap-card hand-card';
-    if (state.selectedTrapType === type) {
+    if (state.selectedTrapIndex === i) {
       card.classList.add('selected');
     }
     card.innerHTML = `
@@ -1401,10 +1406,12 @@ function renderTrapSelection(panel, room) {
     `;
     card.addEventListener('click', () => {
       SFX.step();
-      if (state.selectedTrapType === type) {
+      if (state.selectedTrapIndex === i) {
         state.selectedTrapType = null;
+        state.selectedTrapIndex = null;
       } else {
         state.selectedTrapType = type;
+        state.selectedTrapIndex = i;
       }
       renderBoard(room); // 盤面の配置ハイライトを更新
       renderTrapSelection(panel, room); // 手札の選択表示を更新
@@ -1589,7 +1596,28 @@ function renderFinishScreen(panel, room) {
   const leaveBtn = document.createElement('button');
   leaveBtn.className = 'btn btn-secondary';
   leaveBtn.style.maxWidth = '220px';
-  leaveBtn.textContent = 'ロビーに戻る';
+
+  const LEAVE_DELAY = 6;
+  if (!finishScreenShownAt) finishScreenShownAt = Date.now();
+  const elapsed = Math.floor((Date.now() - finishScreenShownAt) / 1000);
+  let leaveCountdown = Math.max(0, LEAVE_DELAY - elapsed);
+  if (leaveCountdown > 0) {
+    leaveBtn.disabled = true;
+    leaveBtn.textContent = `ロビーに戻る（${leaveCountdown}）`;
+    const leaveTimer = setInterval(() => {
+      leaveCountdown--;
+      if (leaveCountdown <= 0) {
+        clearInterval(leaveTimer);
+        leaveBtn.disabled = false;
+        leaveBtn.textContent = 'ロビーに戻る';
+      } else {
+        leaveBtn.textContent = `ロビーに戻る（${leaveCountdown}）`;
+      }
+    }, 1000);
+  } else {
+    leaveBtn.textContent = 'ロビーに戻る';
+  }
+
   leaveBtn.addEventListener('click', () => {
     localStorage.removeItem('sugoroku_token');
     location.reload();
