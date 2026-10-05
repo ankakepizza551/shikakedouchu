@@ -221,6 +221,7 @@ function createRoom(socketId, playerName, boardSize = 20, maxRounds = 20, isPriv
     currentActionIndex: 0,
     finishCount: 0,
     log: [],
+    skipNotices: [], // 自動で飛ばした「お休み」のうち、まだクライアントへ知らせていない分
   };
   rooms.set(code, room);
   socketToRoom.set(socketId, code);
@@ -331,6 +332,7 @@ function checkAllPlaced(room) {
     });
     room.currentActionIndex = 0;
     addLog(room, '全員配置完了！行動フェーズ開始。');
+    skipRestingPlayers(room);
   }
 }
 
@@ -346,49 +348,65 @@ function rollDice(socketId) {
   const player = room.players.find(p => p.id === socketId);
   if (!player) return { error: 'プレイヤーが見つかりません' };
 
-  let diceResult = null;
-  let dicePos = null; // サイコロで止まったマス（仕掛け適用前）
-  let skipped = false;
+  let diceResult = Math.floor(Math.random() * 6) + 1;
+  if (player.forcedRollOne) {
+    diceResult = 1;
+    player.forcedRollOne = false;
+    addLog(room, `${player.name} は辻風中！サイコロの目が強制的に ${diceResult} に固定`);
+  }
+
+  const oldPosition = player.position;
+  advancePlayer(player, diceResult, room.boardSize);
+  const dicePos = player.position; // サイコロで止まったマス（仕掛け適用前）
+
+  const layout = BOARD_LAYOUTS[room.boardSize];
+  const oldLabel = layout.nodes.find(n => n.id === oldPosition)?.label || oldPosition;
+  const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
+  addLog(room, `${player.name} が ${diceResult} を出した！(${oldLabel} → ${newLabel})`);
+
+  checkGoal(room, player);
+
+  // 仕掛けチェック（連鎖あり、最大3回）
   let trapResults = null;
-
-  if (player.skipNextTurn) {
-    player.skipNextTurn = false;
-    skipped = true;
-    addLog(room, `${player.name} は関所でお休み！`);
-  } else {
-    diceResult = Math.floor(Math.random() * 6) + 1;
-
-    if (player.forcedRollOne) {
-      diceResult = 1;
-      player.forcedRollOne = false;
-      addLog(room, `${player.name} は辻風中！サイコロの目が強制的に ${diceResult} に固定`);
-    }
-
-    const oldPosition = player.position;
-    advancePlayer(player, diceResult, room.boardSize);
-    dicePos = player.position;
-
-    const layout = BOARD_LAYOUTS[room.boardSize];
-    const oldLabel = layout.nodes.find(n => n.id === oldPosition)?.label || oldPosition;
-    const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-    addLog(room, `${player.name} が ${diceResult} を出した！(${oldLabel} → ${newLabel})`);
-
-    checkGoal(room, player);
-
-    // 仕掛けチェック（連鎖あり、最大3回）
-    if (!player.finished) {
-      trapResults = triggerTrapsChain(room, player);
-      if (trapResults.length === 0) trapResults = null;
-    }
+  if (!player.finished) {
+    trapResults = triggerTrapsChain(room, player);
+    if (trapResults.length === 0) trapResults = null;
   }
 
-  if (checkGameEnd(room)) {
-    // checkGameEnd内でstatus='finished'とログ出力済み
-  } else {
-    advanceAction(room);
+  if (!checkGameEnd(room)) advanceAction(room);
+
+  return { room, diceResult, dicePos, trapResults };
+}
+
+// 時間切れ時の代行。配置フェーズは手札からランダムに置き、行動フェーズはサイコロを振る
+function autoPlay(socketId) {
+  const room = getRoomBySocketId(socketId);
+  if (!room) return { error: 'ルームが見つかりません' };
+  const player = room.players.find(p => p.id === socketId);
+  if (!player) return { error: 'プレイヤーが見つかりません' };
+
+  if (room.status === 'placement') {
+    if (player.finished || room.placedThisRound.has(socketId)) return { error: '操作待ちではありません' };
+    const goal = String(room.boardSize);
+    const squares = BOARD_LAYOUTS[room.boardSize].nodes.map(n => n.id).filter(id => id !== '0' && id !== goal);
+    const square = squares[Math.floor(Math.random() * squares.length)];
+    const trapType = player.hand[Math.floor(Math.random() * player.hand.length)];
+    addLog(room, `⏰ ${player.name} は時間切れ。仕掛けを自動で配置します`);
+    const result = placeTrap(socketId, square, trapType);
+    if (result.error) return result;
+    return { room, kind: 'place' };
   }
 
-  return { room, diceResult, dicePos, skipped, trapResults };
+  if (room.status === 'action') {
+    if (room.actionOrder[room.currentActionIndex] !== socketId) return { error: '操作待ちではありません' };
+    const fromPos = player.position;
+    addLog(room, `⏰ ${player.name} は時間切れ。自動でサイコロを振ります`);
+    const result = rollDice(socketId);
+    if (result.error) return result;
+    return { ...result, kind: 'roll', fromPos };
+  }
+
+  return { error: '操作待ちではありません' };
 }
 
 // ゴール判定（ゴール済みは完全無敵）
@@ -418,7 +436,8 @@ function checkGameEnd(room) {
     room.finishCount++;
     last.finishRank = room.finishCount;
     room.status = 'finished';
-    addLog(room, `${last.name} が最下位確定！`);
+    // 誰もゴールしていないのに1人だけ残った＝他の全員が退出した
+    addLog(room, last.finishRank === 1 ? `${last.name} の勝ち！（他のプレイヤーが退出）` : `${last.name} が最下位確定！`);
     addLog(room, '🏆 ゲーム終了！');
     return true;
   }
@@ -675,7 +694,30 @@ function applyTrap(room, player, trap) {
 }
 
 // ========= ターン進行 =========
+// 手番を次へ進める。関所で休みの人の手番は自動で飛ばす
 function advanceAction(room) {
+  advanceTurn(room);
+  skipRestingPlayers(room);
+}
+
+function skipRestingPlayers(room) {
+  while (room.status === 'action') {
+    const current = room.players.find(p => p.id === room.actionOrder[room.currentActionIndex]);
+    if (!current || !current.skipNextTurn) break;
+    current.skipNextTurn = false;
+    addLog(room, `💤 ${current.name} は関所でお休み！`);
+    room.skipNotices.push(current.name);
+    advanceTurn(room);
+  }
+}
+
+function takeSkipNotices(room) {
+  const names = room.skipNotices;
+  room.skipNotices = [];
+  return names;
+}
+
+function advanceTurn(room) {
   room.currentActionIndex++;
 
   if (room.currentActionIndex >= room.actionOrder.length) {
@@ -806,6 +848,7 @@ function removePlayer(socketId, kicked = false) {
       if (orderIdx < room.currentActionIndex) room.currentActionIndex--;
     }
     if (room.currentActionIndex >= room.actionOrder.length) advanceAction(room);
+    else skipRestingPlayers(room);
   }
   if (room.status === 'placement') {
     room.placedThisRound.add(socketId);
@@ -830,7 +873,7 @@ function sanitizeRoom(room, forSocketId) {
         row: node.row,
         col: node.col,
         type: node.type,
-        myTrapCount: (room.traps[node.id] || []).filter(t => t.placerId === forSocketId).length,
+        myTraps: (room.traps[node.id] || []).filter(t => t.placerId === forSocketId).map(t => t.trapType),
       });
     }
   }
@@ -902,6 +945,7 @@ function resetRoom(roomCode) {
   room.currentActionIndex = 0;
   room.finishCount = 0;
   room.log = [];
+  room.skipNotices = [];
 
   return { room };
 }
@@ -948,4 +992,6 @@ module.exports = {
   getRoomList,
   reconnectPlayer,
   changeRoute,
+  autoPlay,
+  takeSkipNotices,
 };

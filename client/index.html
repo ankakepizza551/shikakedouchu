@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="罠を仕込みながら進む、読み合いすごろく。最大4人でオンライン対戦！">
   <meta name="twitter:image" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/og.png">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=2.2.0">
+  <link rel="stylesheet" href="style.css?v=2.3.0">
 </head>
 <body>
 
@@ -85,7 +85,7 @@
       </div>
       <div class="lobby-footer">
         <button id="btn-howto" class="btn-info">📜 遊び方</button>
-        <span class="version-badge">v2.2</span>
+        <span class="version-badge">v2.3</span>
         <button id="btn-changelog" class="btn-info">📋 更新情報</button>
       </div>
     </div>
@@ -193,7 +193,8 @@
             <li>誰がどこに仕掛けを置いたかは分かりません</li>
             <li>設置者自身も自分の仕掛けを踏む場合があります</li>
             <li>ラウンド上限に達するとその時点で終了</li>
-            <li>60秒操作がないとキックされます</li>
+            <li>60秒操作がないと自動で進行します（3回続くとキック）</li>
+            <li>自分が置いた仕掛けは、盤面に絵柄で表示されます</li>
             <li>接続が切れても90秒以内なら再接続できます</li>
           </ul>
         </div>
@@ -220,6 +221,14 @@
         <button id="btn-close-changelog" class="btn-close-guide">✕</button>
       </div>
       <div class="info-modal-body">
+        <div class="changelog-entry">
+          <div class="changelog-ver">v2.3 <span class="changelog-date">2026年10月</span></div>
+          <ul class="changelog-list">
+            <li>⏰ <strong>時間切れは自動進行に</strong>：60秒操作がなくてもすぐにはキックされず、仕掛けの配置やサイコロが自動で行われます。3回続くとキックです。</li>
+            <li>🪤 <strong>自分の仕掛けが見分けられる</strong>：盤面の📌が仕掛けの絵柄に変わり、何を置いたか確認できます。</li>
+            <li>💤 <strong>お休みは自動でスキップ</strong>：関所で休みのときにボタンを押す必要がなくなりました。</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-ver">v2.2 <span class="changelog-date">2026年10月</span></div>
           <ul class="changelog-list">
@@ -285,7 +294,7 @@
   <button id="btn-sound" class="btn-sound" title="サウンドON/OFF">🔊</button>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="boardLayouts.js?v=2.2.0"></script>
-  <script src="game.js?v=2.2.0"></script>
+  <script src="boardLayouts.js?v=2.3.0"></script>
+  <script src="game.js?v=2.3.0"></script>
 </body>
 </html>

@@ -60,18 +60,22 @@ test('残り1人になったらゲーム終了', () => {
   const room = setupActionPhase(g, 2);
   g.removePlayer('A');
   assert.strictEqual(room.status, 'finished');
+  assert.strictEqual(player(room, 'B').finishRank, 1);
+  assert.ok(room.log.some(l => l.includes('B の勝ち')));
+  assert.ok(!room.log.some(l => l.includes('最下位')));
 });
 
 test('ラウンド上限時の順位はゴールまでの残りマス数で決まる', () => {
   const g = loadLogic();
   const room = setupActionPhase(g, 3, 20, 10);
   room.round = 10;
-  // 残りマス数: B=6, A=8, C=11（藤ルートにいても近いとは限らない）
+  // 残りマス数: B=6, A=8, C=10（藤ルートにいても近いとは限らない）
   Object.assign(player(room, 'A'), { position: '12A', preferredBranch: 'A' });
   Object.assign(player(room, 'B'), { position: '14' });
   Object.assign(player(room, 'C'), { position: '6C', preferredBranch: 'C' });
-  room.players.forEach(p => { p.skipNextTurn = true; });
-  for (let i = 0; i < 3; i++) g.rollDice(room.actionOrder[room.currentActionIndex]);
+  room.currentActionIndex = 2; // 最後の手番の C が振り終えるとラウンド上限
+  forceDice(1);
+  g.rollDice('C');
 
   assert.strictEqual(room.status, 'finished');
   assert.deepStrictEqual(['B', 'A', 'C'].map(id => player(room, id).finishRank), [1, 2, 3]);
@@ -144,6 +148,80 @@ test('影武者は設置者と位置を入れ替える', () => {
   assert.strictEqual(player(room, 'B').position, '3');
 });
 
+test('関所で休みの人の手番は自動で飛ばされる', () => {
+  const g = loadLogic();
+  const room = setupActionPhase(g, 3, 30);
+  room.traps['2'] = [trap('blockade', 'C')];
+  forceDice(2);
+  g.rollDice('A'); // A が関所を踏む → このラウンドは B, C と続く
+  assert.strictEqual(player(room, 'A').skipNextTurn, true);
+  g.rollDice('B');
+  g.rollDice('C');
+
+  // 次ラウンド: A が先頭なら振らずに B の手番になる
+  assert.strictEqual(room.round, 2);
+  for (const p of room.players) g.placeTrap(p.id, '29', p.hand[0]);
+  room.traps['29'] = [];
+  assert.strictEqual(room.status, 'action');
+  const order = room.actionOrder;
+  const current = order[room.currentActionIndex];
+  assert.notStrictEqual(current, 'A');
+  assert.deepStrictEqual(g.takeSkipNotices(room), order[0] === 'A' ? ['A'] : []);
+
+  // A が先頭でなかった場合は、A の番が来た時点で飛ばされる
+  while (room.status === 'action' && room.round === 2) {
+    const id = room.actionOrder[room.currentActionIndex];
+    assert.notStrictEqual(id, 'A', 'お休みの A に手番が回ってはいけない');
+    forceDice(1);
+    g.rollDice(id);
+  }
+  assert.ok(room.log.some(l => l.includes('A は関所でお休み')));
+});
+
+test('全員がお休みなら、誰も振らずに次のラウンドへ進む', () => {
+  const g = loadLogic();
+  const room = setupActionPhase(g, 2, 30);
+  player(room, 'A').position = '10B';
+  player(room, 'B').skipNextTurn = true;
+  room.traps['11B'] = [trap('blockade', 'B')];
+  forceDice(1);
+  g.rollDice('A'); // A も関所へ。B は休みで飛ばされ、次ラウンドの配置へ
+
+  assert.strictEqual(room.round, 2);
+  assert.strictEqual(room.status, 'placement');
+  assert.strictEqual(player(room, 'B').skipNextTurn, false);
+  assert.strictEqual(player(room, 'A').skipNextTurn, true);
+});
+
+test('時間切れの代行: 配置フェーズは手札から有効なマスに置く', () => {
+  const g = loadLogic();
+  const { roomCode, room } = g.createRoom('A', 'A', 15, 20, false);
+  g.joinRoom('B', roomCode, 'B');
+  g.startGame(roomCode);
+  const handBefore = [...player(room, 'A').hand];
+
+  const r = g.autoPlay('A');
+  assert.strictEqual(r.kind, 'place');
+  assert.ok(room.placedThisRound.has('A'));
+  const placed = Object.entries(room.traps).filter(([, t]) => t.length);
+  assert.strictEqual(placed.length, 1);
+  const [square, [placedTrap]] = placed[0];
+  assert.ok(square !== '0' && square !== '15');
+  assert.ok(handBefore.includes(placedTrap.trapType));
+  assert.ok(g.autoPlay('A').error, '配置済みなら何もしない');
+});
+
+test('時間切れの代行: 行動フェーズは手番の人だけサイコロを振る', () => {
+  const g = loadLogic();
+  const room = setupActionPhase(g, 2, 30);
+  assert.ok(g.autoPlay('B').error, '手番でない人は代行されない');
+  forceDice(5);
+  const r = g.autoPlay('A');
+  assert.deepStrictEqual({ kind: r.kind, fromPos: r.fromPos, dicePos: r.dicePos, dice: r.diceResult },
+    { kind: 'roll', fromPos: '0', dicePos: '5', dice: 5 });
+  assert.strictEqual(room.actionOrder[room.currentActionIndex], 'B');
+});
+
 test('ゴールしたら順位が付き、2人対戦ならそこで終了', () => {
   const g = loadLogic();
   const room = setupActionPhase(g, 2, 15);
@@ -186,8 +264,12 @@ test('他人の仕掛けの位置や手札はクライアントに送らない',
   g.startGame(roomCode);
   g.placeTrap('A', '3', player(room, 'A').hand[0]);
 
+  const placed = room.traps['3'][0].trapType;
+  const viewA = g.sanitizeRoom(room, 'A');
+  assert.deepStrictEqual(viewA.board.find(n => n.square === '3').myTraps, [placed], '自分の仕掛けは種類まで見える');
+
   const viewB = g.sanitizeRoom(room, 'B');
-  assert.strictEqual(viewB.board.find(n => n.square === '3').myTrapCount, 0);
+  assert.deepStrictEqual(viewB.board.find(n => n.square === '3').myTraps, []);
   assert.deepStrictEqual(viewB.myHand, player(room, 'B').hand);
   assert.ok(!JSON.stringify(viewB).includes('"traps"'));
   assert.ok(viewB.players.every(p => p.hand === undefined));

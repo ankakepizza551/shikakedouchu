@@ -649,6 +649,12 @@ function applyRoomUpdate(room) {
     if (prevMe && nextMe && !prevMe.finished && nextMe.finished) SFX.goal();
   }
 
+  // 関所で休みになった人（サーバー側で自動的に飛ばされる）
+  if (room.skippedPlayers?.length) {
+    SFX.skip();
+    showNotification(`💤 ${room.skippedPlayers.join('、')} は関所でお休み`, 1800);
+  }
+
   // フェーズ・ターン変化アナウンス
   if (prev) {
     const ps = prev.status, ns = room.status;
@@ -698,7 +704,7 @@ function applyRoomUpdate(room) {
 }
 
 // ========= 他プレイヤーのアクションアニメーション =========
-socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPos, trapResults }) => {
+socket.on('player-action', async ({ playerId, diceResult, fromPos, toPos, trapResults }) => {
   if (state.isAnimating || !state.room) return;
   const roller = state.room.players.find(p => p.id === playerId);
   if (!roller) return;
@@ -706,11 +712,7 @@ socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPo
   state.isAnimating = true;
   const animRoom = createAnimRoom();
 
-  if (skipped) {
-    SFX.skip();
-    showNotification(`💤 ${roller.name} はお休み`, 1500);
-    await sleep(700);
-  } else if (diceResult) {
+  if (diceResult) {
     // 他のプレイヤーのサイコロも筒アニメーションで演出
     await playDiceRollAnimation(diceResult, roller.name);
     if (toPos && toPos !== fromPos) {
@@ -735,7 +737,13 @@ socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPo
 
 socket.on('room-update', (room) => {
   room.receivedAt = Date.now(); // 演出で適用が遅れてもキック期限がずれないように
-  if (state.isAnimating) { pendingRoomUpdate = room; return; }
+  if (state.isAnimating) {
+    // 待たせている更新を上書きしても「お休み」の通知は落とさない
+    const queued = pendingRoomUpdate?.skippedPlayers || [];
+    room.skippedPlayers = [...queued, ...(room.skippedPlayers || [])];
+    pendingRoomUpdate = room;
+    return;
+  }
   applyRoomUpdate(room);
 });
 
@@ -834,11 +842,14 @@ function renderBoard(room) {
     cell.appendChild(label);
 
     // 自分が置いた仕掛けのみ表示
-    if (node.myTrapCount > 0) {
+    if (node.myTraps.length > 0) {
+      const defs = node.myTraps.map(type => TRAP_DEFS.find(t => t.type === type)).filter(Boolean);
       const trapDiv = document.createElement('div');
       trapDiv.className = 'trap-indicator my-trap';
-      trapDiv.textContent = '📌'.repeat(Math.min(node.myTrapCount, 3));
-      trapDiv.title = `自分の仕掛け ${node.myTrapCount}個`;
+      trapDiv.textContent = defs.length > 2
+        ? `${defs[0].emoji}+${defs.length - 1}`
+        : defs.map(d => d.emoji).join('');
+      trapDiv.title = `自分の仕掛け：${defs.map(d => d.name).join('、')}`;
       cell.appendChild(trapDiv);
     }
 
@@ -1268,7 +1279,7 @@ function renderDiceRoll(panel) {
       sleep(900),
     ]);
 
-    const { diceResult, skipped, toPos, trapResults, error } = result;
+    const { diceResult, toPos, trapResults, error } = result;
 
     if (error) {
       if (overlay) overlay.classList.add('hidden');
@@ -1284,12 +1295,7 @@ function renderDiceRoll(panel) {
       return;
     }
 
-    if (skipped) {
-      if (overlay) overlay.classList.add('hidden');
-      SFX.skip();
-      showNotification('お休みです！', 1500);
-      await sleep(800);
-    } else if (diceResult) {
+    if (diceResult) {
       if (overlay) {
         const cupWrap = overlay.querySelector('.dice-cup-wrap');
         const tray = overlay.querySelector('#dice-tray');

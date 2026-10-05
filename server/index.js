@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const {
   createRoom, joinRoom, startGame, placeTrap, rollDice,
   getRoomBySocketId, removePlayer, sanitizeRoom, resetRoom, getRoomList,
-  reconnectPlayer, changeRoute,
+  reconnectPlayer, changeRoute, autoPlay, takeSkipNotices,
 } = require('./gameLogic');
 
 const app = express();
@@ -43,29 +43,47 @@ function cancelPendingRemoval(socketId) {
   if (timer) { clearTimeout(timer); pendingRemovals.delete(socketId); }
 }
 
-// ========= キックタイマー =========
+// ========= 時間切れ（自動進行・キック）=========
 const kickTimers = new Map(); // socketId -> { timer, turnKey, deadline }
-const KICK_TIMEOUT_MS = 60 * 1000;
+const KICK_TIMEOUT_MS = Number(process.env.KICK_TIMEOUT_MS) || 60 * 1000;
+const MAX_IDLE_TURNS = 3; // 連続でこの回数だけ時間切れになったらキック。それまでは自動で進める
 
 function setKickTimer(socketId, turnKey) {
   clearKickTimer(socketId);
-  const timer = setTimeout(() => {
-    kickTimers.delete(socketId);
-    cancelPendingRemoval(socketId);
-    cleanupSession(socketId);
-    const room = getRoomBySocketId(socketId);
-    if (!room || room.status === 'lobby' || room.status === 'finished') return;
-    const player = room.players.find(p => p.id === socketId);
-    if (!player) return;
-
-    io.to(socketId).emit('kicked', { reason: '60秒間操作がなかったためキックされました' });
-
-    const updatedRoom = removePlayer(socketId, true);
-    const sock = io.sockets.sockets.get(socketId);
-    if (sock) sock.disconnect(true);
-    if (updatedRoom) broadcastRoom(updatedRoom);
-  }, KICK_TIMEOUT_MS);
+  const timer = setTimeout(() => onTurnTimeout(socketId), KICK_TIMEOUT_MS);
   kickTimers.set(socketId, { timer, turnKey, deadline: Date.now() + KICK_TIMEOUT_MS });
+}
+
+function onTurnTimeout(socketId) {
+  kickTimers.delete(socketId);
+  const room = getRoomBySocketId(socketId);
+  if (!room || room.status === 'lobby' || room.status === 'finished') return;
+  const player = room.players.find(p => p.id === socketId);
+  if (!player) return;
+
+  player.idleTurns = (player.idleTurns || 0) + 1;
+  if (player.idleTurns < MAX_IDLE_TURNS) {
+    const result = autoPlay(socketId);
+    if (!result.error) {
+      if (result.kind === 'roll') emitPlayerAction(result.room, socketId, result.fromPos, result);
+      broadcastRoom(result.room);
+      return;
+    }
+  }
+
+  cancelPendingRemoval(socketId);
+  cleanupSession(socketId);
+  io.to(socketId).emit('kicked', { reason: '操作のない状態が続いたためキックされました' });
+
+  const updatedRoom = removePlayer(socketId, true);
+  const sock = io.sockets.sockets.get(socketId);
+  if (sock) sock.disconnect(true);
+  if (updatedRoom) broadcastRoom(updatedRoom);
+}
+
+function markActive(socketId) {
+  const player = getRoomBySocketId(socketId)?.players.find(p => p.id === socketId);
+  if (player) player.idleTurns = 0;
 }
 
 function clearKickTimer(socketId) {
@@ -96,11 +114,27 @@ function refreshKickTimers(room) {
 // ========= ブロードキャスト =========
 function broadcastRoom(room) {
   refreshKickTimers(room);
+  const skippedPlayers = takeSkipNotices(room);
   for (const player of room.players) {
     const view = sanitizeRoom(room, player.id);
+    view.skippedPlayers = skippedPlayers;
     const kick = kickTimers.get(player.id);
     view.kickRemainingMs = kick ? Math.max(0, kick.deadline - Date.now()) : null;
     io.to(player.id).emit('room-update', view);
+  }
+}
+
+// サイコロの結果を演出用に配る（room-update より前に送る）
+function emitPlayerAction(room, rollerId, fromPos, result, exceptId) {
+  for (const p of room.players) {
+    if (p.id === exceptId) continue;
+    io.to(p.id).emit('player-action', {
+      playerId: rollerId,
+      diceResult: result.diceResult,
+      fromPos,
+      toPos: result.dicePos, // サイコロで止まったマス。仕掛けによる移動は trapResults 側で演出する
+      trapResults: result.trapResults,
+    });
   }
 }
 
@@ -170,6 +204,7 @@ io.on('connection', (socket) => {
   handle(socket, 'place-trap', ({ square, trapType }, callback) => {
     const result = placeTrap(socket.id, String(square), trapType);
     if (result.error) return callback({ error: result.error });
+    markActive(socket.id);
     broadcastRoom(result.room);
     callback({ success: true });
   });
@@ -189,29 +224,14 @@ io.on('connection', (socket) => {
 
     const result = rollDice(socket.id);
     if (result.error) return callback({ error: result.error });
+    markActive(socket.id);
 
-    // サイコロで止まったマス。仕掛けによる移動は trapResults 側で演出する
-    const toPos = result.dicePos ?? fromPos;
-
-    // 他プレイヤーへアニメーション情報を先行送信（room-update より前）
-    for (const p of result.room.players) {
-      if (p.id !== socket.id) {
-        io.to(p.id).emit('player-action', {
-          playerId: socket.id,
-          diceResult: result.diceResult,
-          skipped: result.skipped,
-          fromPos,
-          toPos,
-          trapResults: result.trapResults,
-        });
-      }
-    }
-
+    // 振った本人にはコールバックで返すので、他のプレイヤーにだけ先行送信する
+    emitPlayerAction(result.room, socket.id, fromPos, result, socket.id);
     broadcastRoom(result.room);
     callback({
       diceResult: result.diceResult,
-      skipped: result.skipped,
-      toPos,
+      toPos: result.dicePos,
       trapResults: result.trapResults,
     });
   });
