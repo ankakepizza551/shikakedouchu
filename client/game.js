@@ -704,6 +704,7 @@ socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPo
   if (!roller) return;
 
   state.isAnimating = true;
+  const animRoom = createAnimRoom();
 
   if (skipped) {
     SFX.skip();
@@ -713,13 +714,13 @@ socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPo
     // 他のプレイヤーのサイコロも筒アニメーションで演出
     await playDiceRollAnimation(diceResult, roller.name);
     if (toPos && toPos !== fromPos) {
-      await animatePlayerMove(playerId, fromPos, toPos, state.room);
+      await animatePlayerMove(playerId, fromPos, toPos, animRoom);
     }
   }
 
   if (trapResults && trapResults.length > 0) {
     for (const r of trapResults) {
-      await animateTrapEffect(r, playerId);
+      await animateTrapEffect(r, playerId, animRoom);
     }
   }
 
@@ -896,24 +897,27 @@ function doPlaceTrap(square) {
 }
 
 // ========= Move Animation =========
-async function animatePlayerMove(playerId, fromPos, toPos, baseRoom) {
-  if (!baseRoom || fromPos === toPos) return;
-  const tempPlayers = baseRoom.players.map(p => ({ ...p }));
-  const tempRoom = { ...baseRoom, players: tempPlayers };
-  const player = tempRoom.players.find(p => p.id === playerId);
+// 演出用の盤面コピー。state.room は演出が終わるまで更新されないので、
+// 演出中のコマ位置はこちらに積み上げていく（連鎖時に他のコマが古い位置へ戻らないように）
+function createAnimRoom() {
+  return { ...state.room, players: state.room.players.map(p => ({ ...p })) };
+}
+
+// animRoom 上のコマを1マスずつ動かして描画する。終了時、コマは toPos にいる
+async function animatePlayerMove(playerId, fromPos, toPos, animRoom) {
+  const player = animRoom?.players.find(p => p.id === playerId);
   if (!player) return;
 
-  const path = findPath(fromPos, toPos, baseRoom.boardSize);
-  if (path.length <= 1) return;
-
+  const path = fromPos === toPos ? [] : findPath(fromPos, toPos, animRoom.boardSize);
   const ms = path.length >= 7 ? 100 : path.length >= 5 ? 130 : 160;
 
   for (let i = 1; i < path.length; i++) {
     player.position = path[i];
-    renderBoard(tempRoom);
+    renderBoard(animRoom);
     SFX.step();
     await sleep(ms);
   }
+  player.position = toPos;
 }
 
 // ========= Trap Animations =========
@@ -944,7 +948,7 @@ function addTokenAnim(token, cls) {
   setTimeout(() => token.classList.remove(cls), 900);
 }
 
-async function animateTrapEffect(r, rollerId = state.myId) {
+async function animateTrapEffect(r, rollerId, animRoom) {
   const base = getTrapBase(r.type);
   SFX.trap(base);
   showTrapReveal(r);
@@ -977,104 +981,33 @@ async function animateTrapEffect(r, rollerId = state.myId) {
 
   await sleep(1300);
 
-  if (state.room) {
-    // 単体移動系: roller のみ移動
-    const singleMoveTypes = ['pitfall', 'swap-fail', 'gather-fail', 'magnet-fail', 'magnet', 'torrent'];
-    if (singleMoveTypes.includes(r.type) && r.oldPos !== undefined && r.newPos !== undefined && r.oldPos !== r.newPos) {
-      const tempPlayers = state.room.players.map(p => ({ ...p }));
-      const tempRoom = { ...state.room, players: tempPlayers };
-      const player = tempRoom.players.find(p => p.id === rollerId);
-      if (player) {
-        player.position = r.oldPos;
-        renderBoard(tempRoom);
-        await sleep(120);
-        await animatePlayerMove(rollerId, r.oldPos, r.newPos, tempRoom);
-      }
+  // 動くコマを発動前の位置に置き直してから、1人ずつ移動させる
+  const moves = []; // { id, oldPos, newPos }
+  const singleMoveTypes = ['pitfall', 'swap-fail', 'gather-fail', 'magnet-fail', 'magnet', 'torrent'];
+  if (singleMoveTypes.includes(r.type) && r.oldPos !== undefined && r.newPos !== undefined) {
+    moves.push({ id: rollerId, oldPos: r.oldPos, newPos: r.newPos });
+  } else if (r.type === 'swap' && r.playerOldPos !== undefined && r.placerId) {
+    moves.push({ id: rollerId, oldPos: r.playerOldPos, newPos: r.playerNewPos });
+    moves.push({ id: r.placerId, oldPos: r.placerOldPos, newPos: r.placerNewPos });
+  } else if (r.type === 'involveAll') {
+    moves.push(...(r.affectedDetails || []));
+  } else if (r.type === 'gather') {
+    moves.push(...(r.gatheredDetails || []));
+  } else if (r.type === 'fireworks' && r.rollerOldPos !== undefined && r.rollerNewPos !== undefined) {
+    // 発動者が後退したのち、巻き込まれた全員が後退
+    moves.push({ id: rollerId, oldPos: r.rollerOldPos, newPos: r.rollerNewPos });
+    moves.push(...(r.affectedDetails || []));
+  }
+
+  if (animRoom && moves.some(m => m.oldPos !== m.newPos)) {
+    for (const m of moves) {
+      const p = animRoom.players.find(q => q.id === m.id);
+      if (p) p.position = m.oldPos;
     }
-
-    // スワップ: roller と placer 両方を移動
-    if (r.type === 'swap' && r.playerOldPos !== undefined && r.placerId) {
-      const tempPlayers = state.room.players.map(p => ({
-        ...p,
-        position: p.id === rollerId ? r.playerOldPos : p.position,
-      }));
-      const tempRoom = { ...state.room, players: tempPlayers };
-      renderBoard(tempRoom);
-      await sleep(120);
-      await animatePlayerMove(rollerId, r.playerOldPos, r.playerNewPos, tempRoom);
-      const rollerInTemp = tempRoom.players.find(p => p.id === rollerId);
-      if (rollerInTemp) rollerInTemp.position = r.playerNewPos;
-      await animatePlayerMove(r.placerId, r.placerOldPos, r.placerNewPos, tempRoom);
-    }
-
-    // 全員巻き込み: 影響を受けた全プレイヤーを後退
-    if (r.type === 'involveAll' && r.affectedDetails && r.affectedDetails.length > 0) {
-      const posMap = Object.fromEntries(r.affectedDetails.map(a => [a.id, a.oldPos]));
-      const tempPlayers = state.room.players.map(p => ({
-        ...p,
-        position: p.id === rollerId ? r.rollerPos
-                : posMap[p.id] !== undefined ? posMap[p.id] : p.position,
-      }));
-      const tempRoom = { ...state.room, players: tempPlayers };
-      renderBoard(tempRoom);
-      await sleep(150);
-      for (const a of r.affectedDetails) {
-        if (a.oldPos !== a.newPos) {
-          await animatePlayerMove(a.id, a.oldPos, a.newPos, tempRoom);
-          const tp = tempRoom.players.find(p => p.id === a.id);
-          if (tp) tp.position = a.newPos;
-        }
-      }
-    }
-
-    // 全員集合: 全プレイヤーが gatherPos へ移動
-    if (r.type === 'gather' && r.gatheredDetails && r.gatheredDetails.length > 0) {
-      const posMap = Object.fromEntries(r.gatheredDetails.map(a => [a.id, a.oldPos]));
-      const tempPlayers = state.room.players.map(p => ({
-        ...p,
-        position: posMap[p.id] !== undefined ? posMap[p.id] : p.position,
-      }));
-      const tempRoom = { ...state.room, players: tempPlayers };
-      renderBoard(tempRoom);
-      await sleep(150);
-      for (const a of r.gatheredDetails) {
-        if (a.oldPos !== a.newPos) {
-          await animatePlayerMove(a.id, a.oldPos, a.newPos, tempRoom);
-          const tp = tempRoom.players.find(p => p.id === a.id);
-          if (tp) tp.position = a.newPos;
-        }
-      }
-    }
-
-    // 大筒花火: 発動者が後退したのち、巻き込まれた全員が後退
-    if (r.type === 'fireworks' && r.rollerOldPos !== undefined && r.rollerNewPos !== undefined && r.rollerOldPos !== r.rollerNewPos) {
-      const tempPlayers = state.room.players.map(p => ({ ...p }));
-      const tempRoom = { ...state.room, players: tempPlayers };
-      const player = tempRoom.players.find(p => p.id === rollerId);
-      if (player) {
-        player.position = r.rollerOldPos;
-        r.affectedDetails.forEach(a => {
-          const p = tempRoom.players.find(q => q.id === a.id);
-          if (p) p.position = a.oldPos;
-        });
-
-        renderBoard(tempRoom);
-        await sleep(150);
-
-        // 発動者を4マス後退
-        await animatePlayerMove(rollerId, r.rollerOldPos, r.rollerNewPos, tempRoom);
-        const playerInTemp = tempRoom.players.find(p => p.id === rollerId);
-        if (playerInTemp) playerInTemp.position = r.rollerNewPos;
-
-        // 巻き込まれた隣接プレイヤー全員を2マス後退
-        for (const a of r.affectedDetails) {
-          if (a.oldPos !== a.newPos) {
-            await animatePlayerMove(a.id, a.oldPos, a.newPos, tempRoom);
-            const tp = tempRoom.players.find(p => p.id === a.id);
-            if (tp) tp.position = a.newPos;
-          }
-        }
-      }
+    renderBoard(animRoom);
+    await sleep(150);
+    for (const m of moves) {
+      await animatePlayerMove(m.id, m.oldPos, m.newPos, animRoom);
     }
   }
 
@@ -1322,7 +1255,8 @@ function renderDiceRoll(panel) {
     }
     SFX.diceRoll();
 
-    const myPlayer = state.room?.players.find(p => p.id === state.myId);
+    const animRoom = createAnimRoom();
+    const myPlayer = animRoom.players.find(p => p.id === state.myId);
     const fromPos = myPlayer ? myPlayer.position : '0';
 
     // サーバーへロール要求（通信とアニメーションの並行処理）
@@ -1378,8 +1312,8 @@ function renderDiceRoll(panel) {
       }
 
       // コマ移動アニメーション
-      if (toPos && toPos !== fromPos && state.room) {
-        await animatePlayerMove(state.myId, fromPos, toPos, state.room);
+      if (toPos && toPos !== fromPos) {
+        await animatePlayerMove(state.myId, fromPos, toPos, animRoom);
       }
     } else {
       if (overlay) overlay.classList.add('hidden');
@@ -1388,7 +1322,7 @@ function renderDiceRoll(panel) {
     // トラップ演出
     if (trapResults && trapResults.length > 0) {
       for (const r of trapResults) {
-        await animateTrapEffect(r);
+        await animateTrapEffect(r, state.myId, animRoom);
       }
     }
 
