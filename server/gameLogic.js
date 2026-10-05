@@ -79,10 +79,24 @@ function setPosition(player, nodeId, routeHint) {
   if (route) player.lastRoute = route;
 }
 
-function advancePlayer(player, steps, boardSize) {
+// 桜街道（遠回り）の加護: 入るとお守り、通り抜けると次の出目に追い風
+const SAKURA_TAILWIND = 2;
+
+function advancePlayer(room, player, steps) {
   for (let s = 0; s < steps; s++) {
-    const next = moveForward(player.position, 1, player.preferredBranch, boardSize);
+    const next = moveForward(player.position, 1, player.preferredBranch, room.boardSize);
     if (next === player.position) break;
+
+    const wasOnSakura = routeOf(player.position) === 'A';
+    const nowOnSakura = routeOf(next) === 'A';
+    if (!wasOnSakura && nowOnSakura && !player.shield) {
+      player.shield = true;
+      addLog(room, `🧿 ${player.name} は桜街道でお守りを授かった（次の仕掛けを1回防ぐ）`);
+    }
+    if (wasOnSakura && !nowOnSakura && !player.tailwind) {
+      player.tailwind = true;
+      addLog(room, `🌸 ${player.name} は桜街道を抜けた！ 次の出目 +${SAKURA_TAILWIND}`);
+    }
     setPosition(player, next);
   }
 }
@@ -185,6 +199,8 @@ function createPlayer(id, name, colorIndex) {
     hand: getRandomHand(),
     preferredBranch: 'B',
     lastRoute: null,
+    shield: false,   // お守り: 次に踏む仕掛けを1回防ぐ
+    tailwind: false, // 追い風: 次の出目に加算
   };
 }
 
@@ -254,6 +270,8 @@ function startGame(roomCode) {
     p.hand = getRandomHand();
     p.preferredBranch = 'B';
     p.lastRoute = null;
+    p.shield = false;
+    p.tailwind = false;
     p.position = '0';
     p.finished = false;
     p.finishRank = null;
@@ -355,14 +373,20 @@ function rollDice(socketId) {
     addLog(room, `${player.name} は辻風中！サイコロの目が強制的に ${diceResult} に固定`);
   }
 
+  let bonus = 0;
+  if (player.tailwind) {
+    bonus = SAKURA_TAILWIND;
+    player.tailwind = false;
+  }
+
   const oldPosition = player.position;
-  advancePlayer(player, diceResult, room.boardSize);
+  advancePlayer(room, player, diceResult + bonus);
   const dicePos = player.position; // サイコロで止まったマス（仕掛け適用前）
 
   const layout = BOARD_LAYOUTS[room.boardSize];
   const oldLabel = layout.nodes.find(n => n.id === oldPosition)?.label || oldPosition;
   const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
-  addLog(room, `${player.name} が ${diceResult} を出した！(${oldLabel} → ${newLabel})`);
+  addLog(room, `${player.name} が ${diceResult}${bonus ? ` +${bonus}(追い風)` : ''} を出した！(${oldLabel} → ${newLabel})`);
 
   checkGoal(room, player);
 
@@ -375,7 +399,7 @@ function rollDice(socketId) {
 
   if (!checkGameEnd(room)) advanceAction(room);
 
-  return { room, diceResult, dicePos, trapResults };
+  return { room, diceResult, bonus, dicePos, trapResults };
 }
 
 // 時間切れ時の代行。配置フェーズは手札からランダムに置き、行動フェーズはサイコロを振る
@@ -474,6 +498,16 @@ function triggerTrapsChain(room, player) {
 
     const trapIndex = Math.floor(Math.random() * trapsHere.length);
     const trap = trapsHere.splice(trapIndex, 1)[0];
+
+    // お守りがあれば仕掛けを打ち消す（仕掛けは消費され、連鎖もそこで止まる）
+    if (player.shield) {
+      player.shield = false;
+      const placerName = room.players.find(p => p.id === trap.placerId)?.name || '???';
+      const trapName = TRAP_NAMES[trap.trapType] || trap.trapType;
+      addLog(room, `🧿 ${player.name} のお守りが ${placerName} の「${trapName}」を防いだ！`);
+      results.push({ type: 'shield', blockedType: trap.trapType, trapName, placerName, pos: currentPos });
+      break;
+    }
     const result = applyTrap(room, player, trap);
     if (result) {
       result.pos = currentPos; // 発動したマス
@@ -580,7 +614,7 @@ function applyTrap(room, player, trap) {
     }
     case 'torrent': {
       const oldPos = player.position;
-      advancePlayer(player, 3, room.boardSize);
+      advancePlayer(room, player, 3);
       const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
       const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
       addLog(room, `${rp}🌊 ${placerName} の「急流」発動！ ${player.name} は急流に乗って 3マス進んだ！ ${oldLabel}→${newLabel}`);
@@ -892,6 +926,8 @@ function sanitizeRoom(room, forSocketId) {
       color: p.color,
       skipNextTurn: p.skipNextTurn,
       forcedRollOne: p.forcedRollOne,
+      shield: p.shield,
+      tailwind: p.tailwind,
       finished: p.finished,
       finishRank: p.finishRank,
       preferredBranch: p.preferredBranch,
@@ -924,6 +960,8 @@ function resetRoom(roomCode) {
     p.hand = getRandomHand();
     p.preferredBranch = 'B';
     p.lastRoute = null;
+    p.shield = false;
+    p.tailwind = false;
     p.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
   });
 

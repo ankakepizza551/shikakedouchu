@@ -8,13 +8,12 @@ const BOARD_LAYOUTS = {
       { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
       { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
       { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5A', '5B', '5C'] },
-      // Route A (桜 - 6 steps to 11)
+      // Route A (桜 - 5 steps to 11)
       { id: '5A', label: '5上', row: 0, col: 4, type: 'route-a', next: ['6A'] },
       { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
       { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
       { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 1, col: 8, type: 'route-a', next: ['11'] },
+      { id: '9A', label: '9上', row: 1, col: 8, type: 'route-a', next: ['11'] },
       // Route B (竹 - 5 steps to 11)
       { id: '5B', label: '5中', row: 1, col: 5, type: 'route-b', next: ['6B'] },
       { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },

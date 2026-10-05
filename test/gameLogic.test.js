@@ -222,6 +222,91 @@ test('時間切れの代行: 行動フェーズは手番の人だけサイコロ
   assert.strictEqual(room.actionOrder[room.currentActionIndex], 'B');
 });
 
+test('桜街道に入るとお守りを授かり、次に踏んだ仕掛けを1回だけ防ぐ', () => {
+  const g = loadLogic();
+  const room = setupActionPhase(g, 2, 20);
+  const a = player(room, 'A');
+  Object.assign(a, { position: '5', preferredBranch: 'A' });
+  room.traps['7A'] = [trap('pitfall'), trap('blockade')];
+  forceDice(2);
+  const r = g.rollDice('A'); // 5 → 6A → 7A
+
+  assert.strictEqual(a.position, '7A', 'お守りが防ぐので戻されない');
+  assert.strictEqual(a.shield, false, 'お守りは使い切り');
+  assert.strictEqual(a.skipNextTurn, false);
+  assert.strictEqual(r.trapResults.length, 1, '防いだらそこで止まる');
+  assert.strictEqual(r.trapResults[0].type, 'shield');
+  assert.strictEqual(room.traps['7A'].length, 1, '防いだ仕掛けは消費される');
+
+  // 2回目は防げない
+  room.traps['7A'] = [trap('pitfall')];
+  a.position = '6A';
+  room.currentActionIndex = 0;
+  forceDice(1);
+  g.rollDice('A');
+  assert.strictEqual(a.position, '3', 'お守りがないので 7A から4マス戻される');
+});
+
+test('桜街道を抜けると次の出目に +2（1回だけ）', () => {
+  const g = loadLogic();
+  const room = setupActionPhase(g, 2, 20);
+  const a = player(room, 'A');
+  Object.assign(a, { position: '12A', preferredBranch: 'A', lastRoute: 'A' });
+  forceDice(1);
+  let r = g.rollDice('A'); // 12A → 13（合流）
+  assert.strictEqual(a.position, '13');
+  assert.strictEqual(a.tailwind, true);
+  assert.strictEqual(r.bonus, 0);
+
+  room.currentActionIndex = 0;
+  forceDice(3);
+  r = g.rollDice('A'); // 3 + 2 = 5マス
+  assert.deepStrictEqual({ dice: r.diceResult, bonus: r.bonus, pos: a.position }, { dice: 3, bonus: 2, pos: '18' });
+  assert.strictEqual(a.tailwind, false);
+
+  room.currentActionIndex = 0;
+  forceDice(1);
+  r = g.rollDice('A');
+  assert.deepStrictEqual({ bonus: r.bonus, pos: a.position }, { bonus: 0, pos: '19' });
+});
+
+test('竹林街道と藤街道では加護を得られない', () => {
+  const g = loadLogic();
+  const room = setupActionPhase(g, 2, 20);
+  const a = player(room, 'A');
+  Object.assign(a, { position: '5', preferredBranch: 'C' });
+  forceDice(6);
+  g.rollDice('A'); // 藤街道を通り抜けて 14 へ
+  assert.strictEqual(a.position, '14');
+  assert.strictEqual(a.shield, false);
+  assert.strictEqual(a.tailwind, false);
+});
+
+test('盤面定義: どの進路でもスタートからゴールまで辿り着ける', () => {
+  const { BOARD_LAYOUTS } = require('../client/boardLayouts');
+  for (const [size, layout] of Object.entries(BOARD_LAYOUTS)) {
+    const ids = new Set(layout.nodes.map(n => n.id));
+    assert.strictEqual(ids.size, layout.nodes.length, `${size}: id が重複している`);
+    const cells = new Set(layout.nodes.map(n => `${n.row},${n.col}`));
+    assert.strictEqual(cells.size, layout.nodes.length, `${size}: 同じ位置に2マスある`);
+    for (const n of layout.nodes) for (const next of n.next) assert.ok(ids.has(next), `${size}: ${n.id} → ${next} が存在しない`);
+
+    const lengths = {};
+    for (const branch of ['A', 'B', 'C']) {
+      let cur = '0';
+      let steps = 0;
+      while (cur !== size && steps < 100) {
+        const node = layout.nodes.find(n => n.id === cur);
+        cur = node.next.length === 1 ? node.next[0] : node.next.find(id => id.endsWith(branch));
+        steps++;
+      }
+      assert.strictEqual(cur, size, `${size}マス: ${branch} ルートでゴールに着かない`);
+      lengths[branch] = steps;
+    }
+    assert.ok(lengths.A > lengths.B && lengths.B > lengths.C, `${size}マス: 桜 > 竹 > 藤 の長さになっていない`);
+  }
+});
+
 test('ゴールしたら順位が付き、2人対戦ならそこで終了', () => {
   const g = loadLogic();
   const room = setupActionPhase(g, 2, 15);

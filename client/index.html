@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="罠を仕込みながら進む、読み合いすごろく。最大4人でオンライン対戦！">
   <meta name="twitter:image" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/og.png">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=2.3.0">
+  <link rel="stylesheet" href="style.css?v=2.4.0">
 </head>
 <body>
 
@@ -85,7 +85,7 @@
       </div>
       <div class="lobby-footer">
         <button id="btn-howto" class="btn-info">📜 遊び方</button>
-        <span class="version-badge">v2.3</span>
+        <span class="version-badge">v2.4</span>
         <button id="btn-changelog" class="btn-info">📋 更新情報</button>
       </div>
     </div>
@@ -188,6 +188,15 @@
           </div>
         </div>
         <div class="howto-section">
+          <h3 class="howto-heading">🛤️ 3つの街道</h3>
+          <ul class="howto-list">
+            <li>🌸 桜街道 — 遠回り。入るとお守り（次の仕掛けを1回防ぐ）を授かり、抜けると次の出目に +2</li>
+            <li>🎋 竹林街道 — 標準の長さ</li>
+            <li>🌊 藤街道 — 最短の近道。加護はなし</li>
+          </ul>
+          <p class="howto-note">進路は分岐の手前にいる間、いつでも選び直せます。</p>
+        </div>
+        <div class="howto-section">
           <h3 class="howto-heading">💡 ポイント</h3>
           <ul class="howto-list">
             <li>誰がどこに仕掛けを置いたかは分かりません</li>
@@ -221,6 +230,14 @@
         <button id="btn-close-changelog" class="btn-close-guide">✕</button>
       </div>
       <div class="info-modal-body">
+        <div class="changelog-entry">
+          <div class="changelog-ver">v2.4 <span class="changelog-date">2026年10月</span></div>
+          <ul class="changelog-list">
+            <li>🌸 <strong>桜街道に加護</strong>：遠回りの桜街道に入るとお守り（次の仕掛けを1回防ぐ）を授かり、抜けると次の出目に +2 されます。近道の藤街道一択にならないよう調整しました。</li>
+            <li>📏 <strong>15マス盤の桜街道を1マス短縮</strong>：短い盤でも3つの街道が釣り合うようにしました。</li>
+            <li>📍 <strong>進路選択は分岐の手前だけ</strong>：効果のない場面では進路ボタンを出さないようにしました。</li>
+          </ul>
+        </div>
         <div class="changelog-entry">
           <div class="changelog-ver">v2.3 <span class="changelog-date">2026年10月</span></div>
           <ul class="changelog-list">
@@ -294,7 +311,7 @@
   <button id="btn-sound" class="btn-sound" title="サウンドON/OFF">🔊</button>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="boardLayouts.js?v=2.3.0"></script>
-  <script src="game.js?v=2.3.0"></script>
+  <script src="boardLayouts.js?v=2.4.0"></script>
+  <script src="game.js?v=2.4.0"></script>
 </body>
 </html>

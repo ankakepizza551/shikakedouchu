@@ -1,6 +1,6 @@
 {
   "name": "sugoroku-online",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "仕掛け道中 - オンラインマルチプレイヤーボードゲーム",
   "main": "server/index.js",
   "license": "MIT",

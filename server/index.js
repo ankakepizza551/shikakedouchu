@@ -131,6 +131,7 @@ function emitPlayerAction(room, rollerId, fromPos, result, exceptId) {
     io.to(p.id).emit('player-action', {
       playerId: rollerId,
       diceResult: result.diceResult,
+      bonus: result.bonus,
       fromPos,
       toPos: result.dicePos, // サイコロで止まったマス。仕掛けによる移動は trapResults 側で演出する
       trapResults: result.trapResults,
@@ -231,6 +232,7 @@ io.on('connection', (socket) => {
     broadcastRoom(result.room);
     callback({
       diceResult: result.diceResult,
+      bonus: result.bonus,
       toPos: result.dicePos,
       trapResults: result.trapResults,
     });

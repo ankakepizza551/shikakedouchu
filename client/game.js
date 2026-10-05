@@ -351,6 +351,7 @@ const SFX = {
       involveAll: () => { tone(180,'sawtooth',0.35,0.6); for (let i=0;i<4;i++) tone(140+i*15,'sawtooth',0.14,0.3,0.1+i*0.07); },
       random:     () => { for (let i=0;i<7;i++) tone(200+Math.random()*700,'sine',0.09,0.28,i*0.06); },
       gather:     () => { [400,480,560,640,560].forEach((f,i)=>tone(f,'sine',0.13,0.42,i*0.08)); },
+      shield:     () => { [880,1175,1568].forEach((f,i)=>tone(f,'sine',0.16,0.35,i*0.09)); },
       fireworks:  () => {
         tone(600, 'sawtooth', 0.2, 0.4);
         tone(300, 'sawtooth', 0.3, 0.5, 0.05);
@@ -704,7 +705,7 @@ function applyRoomUpdate(room) {
 }
 
 // ========= 他プレイヤーのアクションアニメーション =========
-socket.on('player-action', async ({ playerId, diceResult, fromPos, toPos, trapResults }) => {
+socket.on('player-action', async ({ playerId, diceResult, bonus, fromPos, toPos, trapResults }) => {
   if (state.isAnimating || !state.room) return;
   const roller = state.room.players.find(p => p.id === playerId);
   if (!roller) return;
@@ -715,6 +716,7 @@ socket.on('player-action', async ({ playerId, diceResult, fromPos, toPos, trapRe
   if (diceResult) {
     // 他のプレイヤーのサイコロも筒アニメーションで演出
     await playDiceRollAnimation(diceResult, roller.name);
+    if (bonus) showTailwind(bonus);
     if (toPos && toPos !== fromPos) {
       await animatePlayerMove(playerId, fromPos, toPos, animRoom);
     }
@@ -937,18 +939,31 @@ function getTrapBase(type) {
   return type.split('-')[0];
 }
 
+function showTailwind(bonus) {
+  showNotification(`🌸 追い風！ 出目 +${bonus}`, 1500);
+}
+
 function showTrapReveal(r) {
   document.querySelectorAll('.trap-reveal').forEach(el => el.remove());
   const base = getTrapBase(r.type);
-  const def = TRAP_DEFS.find(t => t.type === base) || TRAP_DEFS[0];
-  const emoji = r.isRandom ? `❓→${def.emoji}` : def.emoji;
+  let emoji, name, detail;
+  if (r.type === 'shield') {
+    emoji = '🧿';
+    name = 'お守り';
+    detail = `${escHtml(r.placerName)} の「${escHtml(r.trapName)}」を防いだ！`;
+  } else {
+    const def = TRAP_DEFS.find(t => t.type === base) || TRAP_DEFS[0];
+    emoji = r.isRandom ? `❓→${def.emoji}` : def.emoji;
+    name = def.name;
+    detail = `${escHtml(r.placerName)} の罠！`;
+  }
 
   const el = document.createElement('div');
   el.className = `trap-reveal trap-reveal-${base}`;
   el.innerHTML = `
     <div class="trap-reveal-emoji">${emoji}</div>
-    <div class="trap-reveal-name">${def.name}</div>
-    <div class="trap-reveal-placer">${escHtml(r.placerName)} の罠！</div>
+    <div class="trap-reveal-name">${name}</div>
+    <div class="trap-reveal-placer">${detail}</div>
   `;
   document.body.appendChild(el);
   setTimeout(() => { if (el.parentNode) el.remove(); }, 2500);
@@ -1042,6 +1057,8 @@ function renderPlayers(room) {
     if (p.finished) statuses.push(`${p.finishRank}位 🏁`);
     if (p.skipNextTurn) statuses.push('お休み');
     if (p.forcedRollOne) statuses.push('辻風');
+    if (p.shield) statuses.push('🧿お守り');
+    if (p.tailwind) statuses.push('🌸追い風');
 
     const node = layout ? layout.nodes.find(n => n.id === p.position) : null;
     const posLabel = node ? node.label : p.position;
@@ -1073,6 +1090,12 @@ function renderRouteSelector() {
   const myPlayer = state.room?.players.find(p => p.id === state.myId);
   if (!myPlayer || myPlayer.finished) return null;
 
+  // 進路が効くのは分岐の手前にいる間だけなので、それ以外では出さない
+  const layout = BOARD_LAYOUTS[state.room.boardSize];
+  const fork = layout.nodes.find(n => n.next.length > 1);
+  const here = layout.nodes.find(n => n.id === myPlayer.position);
+  if (!fork || !here || here.type !== 'common' || Number(here.id) > Number(fork.id)) return null;
+
   const currentRoute = state.room.myPreferredRoute || 'B';
 
   const wrap = document.createElement('div');
@@ -1087,9 +1110,9 @@ function renderRouteSelector() {
   btnGroup.className = 'route-selector-btns';
 
   const routes = [
-    { key: 'A', name: '🌸 桜街道 (安全/長)', cls: 'route-btn-a' },
-    { key: 'B', name: '🎋 竹林街道 (標準)', cls: 'route-btn-b' },
-    { key: 'C', name: '🌊 藤街道 (近道/難)', cls: 'route-btn-c' },
+    { key: 'A', name: '🌸 桜街道 (長/加護)', cls: 'route-btn-a', hint: '遠回りだが、入るとお守り（次の仕掛けを1回防ぐ）、抜けると次の出目 +2' },
+    { key: 'B', name: '🎋 竹林街道 (標準)', cls: 'route-btn-b', hint: '標準の長さ' },
+    { key: 'C', name: '🌊 藤街道 (近道)', cls: 'route-btn-c', hint: '最短。加護はなし' },
   ];
 
   routes.forEach(r => {
@@ -1099,6 +1122,7 @@ function renderRouteSelector() {
       btn.classList.add('selected');
     }
     btn.textContent = r.name;
+    btn.title = r.hint;
     btn.addEventListener('click', () => {
       if (currentRoute === r.key) return;
       SFX.step();
@@ -1279,7 +1303,7 @@ function renderDiceRoll(panel) {
       sleep(900),
     ]);
 
-    const { diceResult, toPos, trapResults, error } = result;
+    const { diceResult, bonus, toPos, trapResults, error } = result;
 
     if (error) {
       if (overlay) overlay.classList.add('hidden');
@@ -1316,6 +1340,8 @@ function renderDiceRoll(panel) {
         const title = overlay.querySelector('.dice-roll-announcement');
         if (title) title.remove();
       }
+
+      if (bonus) showTailwind(bonus);
 
       // コマ移動アニメーション
       if (toPos && toPos !== fromPos) {
