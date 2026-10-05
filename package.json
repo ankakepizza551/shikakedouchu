@@ -3,6 +3,7 @@
   "version": "2.2.0",
   "description": "仕掛け道中 - オンラインマルチプレイヤーボードゲーム",
   "main": "server/index.js",
+  "license": "MIT",
   "scripts": {
     "start": "node server/index.js",
     "test": "node --test",
