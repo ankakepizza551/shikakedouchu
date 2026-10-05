@@ -13,133 +13,6 @@ const TRAP_DEFS = [
   { type: 'random',     emoji: '❓', name: '千両箱',      desc: '何が起きるかはお楽しみ！' },
 ];
 
-// ========= Board Layouts =========
-const BOARD_LAYOUTS = {
-  15: {
-    maxNode: 15,
-    nodes: [
-      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
-      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
-      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
-      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
-      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5A', '5B', '5C'] },
-      // Route A (桜 - 6 steps to 11)
-      { id: '5A', label: '5上', row: 0, col: 4, type: 'route-a', next: ['6A'] },
-      { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
-      { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
-      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 1, col: 8, type: 'route-a', next: ['11'] },
-      // Route B (竹 - 5 steps to 11)
-      { id: '5B', label: '5中', row: 1, col: 5, type: 'route-b', next: ['6B'] },
-      { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },
-      { id: '7B', label: '7中', row: 1, col: 7, type: 'route-b', next: ['8B'] },
-      { id: '8B', label: '8中', row: 2, col: 6, type: 'route-b', next: ['11'] },
-      // Route C (藤 - 4 steps to 11)
-      { id: '5C', label: '5下', row: 2, col: 4, type: 'route-c', next: ['6C'] },
-      { id: '6C', label: '6下', row: 2, col: 5, type: 'route-c', next: ['7C'] },
-      { id: '7C', label: '7下', row: 3, col: 6, type: 'route-c', next: ['11'] },
-      // Common End
-      { id: '11', label: '11', row: 2, col: 7, type: 'common', next: ['12'] },
-      { id: '12', label: '12', row: 2, col: 8, type: 'common', next: ['13'] },
-      { id: '13', label: '13', row: 3, col: 8, type: 'common', next: ['14'] },
-      { id: '14', label: '14', row: 3, col: 7, type: 'common', next: ['15'] },
-      { id: '15', label: '終', row: 3, col: 5, type: 'common', next: [] },
-    ]
-  },
-  20: {
-    maxNode: 20,
-    nodes: [
-      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
-      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
-      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
-      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
-      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5'] },
-      { id: '5', label: '5', row: 1, col: 5, type: 'common', next: ['6A', '6B', '6C'] },
-      // Route A (桜 - 8 steps to 13)
-      { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
-      { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
-      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 0, col: 9, type: 'route-a', next: ['11A'] },
-      { id: '11A', label: '11上', row: 0, col: 10, type: 'route-a', next: ['12A'] },
-      { id: '12A', label: '12上', row: 1, col: 10, type: 'route-a', next: ['13'] },
-      // Route B (竹 - 6 steps to 13)
-      { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },
-      { id: '7B', label: '7中', row: 1, col: 7, type: 'route-b', next: ['8B'] },
-      { id: '8B', label: '8中', row: 1, col: 8, type: 'route-b', next: ['9B'] },
-      { id: '9B', label: '9中', row: 1, col: 9, type: 'route-b', next: ['10B'] },
-      { id: '10B', label: '10中', row: 2, col: 8, type: 'route-b', next: ['13'] },
-      // Route C (藤 - 5 steps to 13)
-      { id: '6C', label: '6下', row: 2, col: 5, type: 'route-c', next: ['7C'] },
-      { id: '7C', label: '7下', row: 2, col: 6, type: 'route-c', next: ['8C'] },
-      { id: '8C', label: '8下', row: 2, col: 7, type: 'route-c', next: ['9C'] },
-      { id: '9C', label: '9下', row: 3, col: 8, type: 'route-c', next: ['13'] },
-      // Common End
-      { id: '13', label: '13', row: 2, col: 9, type: 'common', next: ['14'] },
-      { id: '14', label: '14', row: 2, col: 10, type: 'common', next: ['15'] },
-      { id: '15', label: '15', row: 3, col: 10, type: 'common', next: ['16'] },
-      { id: '16', label: '16', row: 4, col: 10, type: 'common', next: ['17'] },
-      { id: '17', label: '17', row: 4, col: 9, type: 'common', next: ['18'] },
-      { id: '18', label: '18', row: 4, col: 8, type: 'common', next: ['19'] },
-      { id: '19', label: '19', row: 4, col: 7, type: 'common', next: ['20'] },
-      { id: '20', label: '終', row: 3, col: 7, type: 'common', next: [] },
-    ]
-  },
-  30: {
-    maxNode: 30,
-    nodes: [
-      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
-      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
-      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
-      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
-      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5'] },
-      { id: '5', label: '5', row: 1, col: 5, type: 'common', next: ['6'] },
-      { id: '6', label: '6', row: 1, col: 6, type: 'common', next: ['7'] },
-      { id: '7', label: '7', row: 1, col: 7, type: 'common', next: ['8A', '8B', '8C'] },
-      // Route A (桜 - 11 steps to 18)
-      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 0, col: 9, type: 'route-a', next: ['11A'] },
-      { id: '11A', label: '11上', row: 0, col: 10, type: 'route-a', next: ['12A'] },
-      { id: '12A', label: '12上', row: 0, col: 11, type: 'route-a', next: ['13A'] },
-      { id: '13A', label: '13上', row: 1, col: 11, type: 'route-a', next: ['14A'] },
-      { id: '14A', label: '14上', row: 2, col: 11, type: 'route-a', next: ['15A'] },
-      { id: '15A', label: '15上', row: 3, col: 11, type: 'route-a', next: ['16A'] },
-      { id: '16A', label: '16上', row: 4, col: 11, type: 'route-a', next: ['17A'] },
-      { id: '17A', label: '17上', row: 4, col: 10, type: 'route-a', next: ['18'] },
-      // Route B (竹 - 8 steps to 18)
-      { id: '8B', label: '8中', row: 1, col: 8, type: 'route-b', next: ['9B'] },
-      { id: '9B', label: '9中', row: 1, col: 9, type: 'route-b', next: ['10B'] },
-      { id: '10B', label: '10中', row: 1, col: 10, type: 'route-b', next: ['11B'] },
-      { id: '11B', label: '11中', row: 2, col: 10, type: 'route-b', next: ['12B'] },
-      { id: '12B', label: '12中', row: 3, col: 10, type: 'route-b', next: ['13B'] },
-      { id: '13B', label: '13中', row: 3, col: 9, type: 'route-b', next: ['14B'] },
-      { id: '14B', label: '14中', row: 3, col: 8, type: 'route-b', next: ['18'] },
-      // Route C (藤 - 6 steps to 18)
-      { id: '8C', label: '8下', row: 2, col: 7, type: 'route-c', next: ['9C'] },
-      { id: '9C', label: '9下', row: 2, col: 6, type: 'route-c', next: ['10C'] },
-      { id: '10C', label: '10下', row: 3, col: 6, type: 'route-c', next: ['11C'] },
-      { id: '11C', label: '11下', row: 4, col: 6, type: 'route-c', next: ['12C'] },
-      { id: '12C', label: '12下', row: 4, col: 7, type: 'route-c', next: ['18'] },
-      // Common End
-      { id: '18', label: '18', row: 4, col: 8, type: 'common', next: ['19'] },
-      { id: '19', label: '19', row: 4, col: 9, type: 'common', next: ['20'] },
-      { id: '20', label: '20', row: 5, col: 9, type: 'common', next: ['21'] },
-      { id: '21', label: '21', row: 5, col: 8, type: 'common', next: ['22'] },
-      { id: '22', label: '22', row: 5, col: 7, type: 'common', next: ['23'] },
-      { id: '23', label: '23', row: 5, col: 6, type: 'common', next: ['24'] },
-      { id: '24', label: '24', row: 5, col: 5, type: 'common', next: ['25'] },
-      { id: '25', label: '25', row: 5, col: 4, type: 'common', next: ['26'] },
-      { id: '26', label: '26', row: 5, col: 3, type: 'common', next: ['27'] },
-      { id: '27', label: '27', row: 5, col: 2, type: 'common', next: ['28'] },
-      { id: '28', label: '28', row: 5, col: 1, type: 'common', next: ['29'] },
-      { id: '29', label: '29', row: 5, col: 0, type: 'common', next: ['30'] },
-      { id: '30', label: '終', row: 4, col: 0, type: 'common', next: [] },
-    ]
-  }
-};
-
 function findPath(fromNodeId, toNodeId, boardSize) {
   const layout = BOARD_LAYOUTS[boardSize];
   if (!layout) return [];
@@ -175,25 +48,6 @@ function findPath(fromNodeId, toNodeId, boardSize) {
   return [];
 }
 
-function moveForward(fromNodeId, steps, preferredBranch, boardSize) {
-  let current = fromNodeId;
-  const layout = BOARD_LAYOUTS[boardSize];
-  if (!layout) return current;
-  
-  for (let s = 0; s < steps; s++) {
-    const node = layout.nodes.find(n => n.id === current);
-    if (!node || !node.next || node.next.length === 0) break;
-    
-    if (node.next.length === 1) {
-      current = node.next[0];
-    } else {
-      const pref = preferredBranch === 'C' ? 'C' : (preferredBranch === 'A' ? 'A' : 'B');
-      current = node.next.find(n => n.endsWith(pref)) || node.next[0];
-    }
-  }
-  return current;
-}
-
 const state = {
   myId: null,
   room: null,
@@ -201,6 +55,7 @@ const state = {
   selectedMaxRounds: 20,
   isPrivate: false,
   isAnimating: false,
+  isJoining: false,
   selectedTrapType: null,
   selectedTrapIndex: null,
 };
@@ -516,18 +371,17 @@ document.getElementById('btn-sound').addEventListener('click', () => {
 });
 
 // ========= カウントダウン =========
-let myTurnStartTime = null;
+let kickDeadline = null; // サーバーから届いたキック期限（ローカル時刻）
 let countdownInterval = null;
 
-function startCountdown() {
-  if (myTurnStartTime) return; // すでに進行中
-  myTurnStartTime = Date.now();
-  if (countdownInterval) clearInterval(countdownInterval);
-  countdownInterval = setInterval(updateCountdown, 500);
+function startCountdown(deadline) {
+  kickDeadline = deadline;
+  if (!countdownInterval) countdownInterval = setInterval(updateCountdown, 500);
+  updateCountdown();
 }
 
 function stopCountdown() {
-  myTurnStartTime = null;
+  kickDeadline = null;
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
   updateCountdown();
 }
@@ -535,8 +389,8 @@ function stopCountdown() {
 function updateCountdown() {
   const el = document.getElementById('kick-timer');
   if (!el) return;
-  if (!myTurnStartTime) { el.textContent = ''; el.className = 'kick-timer'; return; }
-  const remaining = Math.max(0, Math.ceil(60 - (Date.now() - myTurnStartTime) / 1000));
+  if (!kickDeadline) { el.textContent = ''; el.className = 'kick-timer'; return; }
+  const remaining = Math.max(0, Math.ceil((kickDeadline - Date.now()) / 1000));
   el.textContent = `残り ${remaining}秒`;
   el.className = 'kick-timer' + (remaining <= 10 ? ' urgent' : '');
 }
@@ -578,18 +432,25 @@ function renderRoomList(rooms) {
     btn.addEventListener('click', () => {
       const name = getPlayerName();
       if (!name) return;
-      const code = btn.dataset.code;
-      socket.emit('join-room', { roomCode: code, playerName: name }, ({ roomCode, room, error, reconnectToken }) => {
-        if (error) return showError(error);
-        if (reconnectToken) localStorage.setItem('sugoroku_token', reconnectToken);
-        stopRoomListRefresh();
-        state.myId = socket.id;
-        state.room = room;
-        document.getElementById('room-code-display').textContent = roomCode || code;
-        renderWaiting(room);
-        showScreen('screen-waiting');
-      });
+      enterRoom('join-room', { roomCode: btn.dataset.code, playerName: name });
     });
+  });
+}
+
+// ルーム作成・参加の共通処理（連打で二重送信しないよう応答待ちの間はガードする）
+function enterRoom(event, payload) {
+  if (state.isJoining) return;
+  state.isJoining = true;
+  socket.emit(event, payload, ({ roomCode, room, error, reconnectToken }) => {
+    state.isJoining = false;
+    if (error) return showError(error);
+    if (reconnectToken) sessionStorage.setItem('sugoroku_token', reconnectToken);
+    stopRoomListRefresh();
+    state.myId = socket.id;
+    state.room = room;
+    document.getElementById('room-code-display').textContent = roomCode;
+    renderWaiting(room);
+    showScreen('screen-waiting');
   });
 }
 
@@ -597,7 +458,7 @@ function renderRoomList(rooms) {
 document.getElementById('btn-refresh-rooms').addEventListener('click', fetchRoomList);
 
 document.getElementById('btn-leave-waiting').addEventListener('click', () => {
-  localStorage.removeItem('sugoroku_token');
+  sessionStorage.removeItem('sugoroku_token');
   location.reload();
 });
 
@@ -685,16 +546,7 @@ document.getElementById('toggle-private').addEventListener('change', e => {
 document.getElementById('btn-create').addEventListener('click', () => {
   const name = getPlayerName();
   if (!name) return;
-  socket.emit('create-room', { playerName: name, boardSize: state.selectedBoardSize, maxRounds: state.selectedMaxRounds, isPrivate: state.isPrivate }, ({ roomCode, room, error, reconnectToken }) => {
-    if (error) return showError(error);
-    if (reconnectToken) localStorage.setItem('sugoroku_token', reconnectToken);
-    stopRoomListRefresh();
-    state.myId = socket.id;
-    state.room = room;
-    document.getElementById('room-code-display').textContent = roomCode;
-    renderWaiting(room);
-    showScreen('screen-waiting');
-  });
+  enterRoom('create-room', { playerName: name, boardSize: state.selectedBoardSize, maxRounds: state.selectedMaxRounds, isPrivate: state.isPrivate });
 });
 
 document.getElementById('btn-join').addEventListener('click', () => {
@@ -702,16 +554,7 @@ document.getElementById('btn-join').addEventListener('click', () => {
   if (!name) return;
   const code = document.getElementById('room-code-input').value.trim().toUpperCase();
   if (code.length !== 4) return showError('ルームコードは4文字です');
-  socket.emit('join-room', { roomCode: code, playerName: name }, ({ roomCode, room, error, reconnectToken }) => {
-    if (error) return showError(error);
-    if (reconnectToken) localStorage.setItem('sugoroku_token', reconnectToken);
-    stopRoomListRefresh();
-    state.myId = socket.id;
-    state.room = room;
-    document.getElementById('room-code-display').textContent = roomCode || code;
-    renderWaiting(room);
-    showScreen('screen-waiting');
-  });
+  enterRoom('join-room', { roomCode: code, playerName: name });
 });
 
 document.getElementById('player-name').addEventListener('keydown', e => {
@@ -733,40 +576,43 @@ let wasConnected = false;
 
 socket.on('connect', () => {
   state.myId = socket.id;
-  if (wasConnected) {
-    const token = localStorage.getItem('sugoroku_token');
-    if (token) {
-      socket.emit('reconnect-session', { token }, ({ roomCode, room, error }) => {
-        if (error) {
-          localStorage.removeItem('sugoroku_token');
-          showNotification('再接続に失敗しました。ロビーへ戻ります...', 3000);
-          setTimeout(() => location.reload(), 3000);
-          return;
-        }
-        // 切断通知を消す
-        document.getElementById('notification').classList.add('hidden');
-        pendingRoomUpdate = null;
-        state.isAnimating = false;
-        state.myId = socket.id;
-        state.room = room;
-        document.getElementById('room-code-display').textContent = roomCode;
-        if (room.status === 'lobby') {
-          renderWaiting(room);
-          showScreen('screen-waiting');
-        } else {
-          showScreen('screen-game');
-          renderGame(room);
-        }
-        showNotification('再接続しました！', 2000);
-      });
-    } else {
-      showNotification('接続が回復しました。ロビーへ戻ります...', 3000);
-      setTimeout(() => location.reload(), 3000);
-    }
-  } else {
-    startRoomListRefresh();
-  }
+  state.isJoining = false;
+  // ページ読み込み直後（リロード・タブ復帰）でもトークンがあれば再接続を試みる
+  const isPageLoad = !wasConnected;
   wasConnected = true;
+
+  const backToLobby = (msg) => {
+    if (isPageLoad) return startRoomListRefresh();
+    showNotification(msg, 3000);
+    setTimeout(() => location.reload(), 3000);
+  };
+
+  const token = sessionStorage.getItem('sugoroku_token');
+  if (!token) return backToLobby('接続が回復しました。ロビーへ戻ります...');
+
+  socket.emit('reconnect-session', { token }, ({ roomCode, room, error }) => {
+    if (error) {
+      sessionStorage.removeItem('sugoroku_token');
+      return backToLobby('再接続に失敗しました。ロビーへ戻ります...');
+    }
+    // 切断通知・途中だった演出を消す
+    document.getElementById('notification').classList.add('hidden');
+    document.getElementById('dice-anim-overlay').classList.add('hidden');
+    stopRoomListRefresh();
+    pendingRoomUpdate = null;
+    state.isAnimating = false;
+    state.myId = socket.id;
+    state.room = room;
+    document.getElementById('room-code-display').textContent = roomCode;
+    if (room.status === 'lobby') {
+      renderWaiting(room);
+      showScreen('screen-waiting');
+    } else {
+      showScreen('screen-game');
+      renderGame(room);
+    }
+    showNotification('再接続しました！', 2000);
+  });
 });
 
 socket.on('disconnect', () => {
@@ -836,7 +682,11 @@ function applyRoomUpdate(room) {
     (room.status === 'action' && room.currentActionPlayerId === state.myId) ||
     (room.status === 'placement' && !room.myPlacedThisRound)
   );
-  if (isMyTurn) startCountdown(); else stopCountdown();
+  if (isMyTurn && room.kickRemainingMs != null) {
+    startCountdown((room.receivedAt || Date.now()) + room.kickRemainingMs);
+  } else {
+    stopCountdown();
+  }
   if (room.status !== 'finished') finishScreenShownAt = null;
   if (room.status === 'lobby') {
     renderWaiting(room);
@@ -857,7 +707,7 @@ socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPo
 
   if (skipped) {
     SFX.skip();
-    showNotification(`💤 ${escHtml(roller.name)} はお休み`, 1500);
+    showNotification(`💤 ${roller.name} はお休み`, 1500);
     await sleep(700);
   } else if (diceResult) {
     // 他のプレイヤーのサイコロも筒アニメーションで演出
@@ -883,6 +733,7 @@ socket.on('player-action', async ({ playerId, diceResult, skipped, fromPos, toPo
 });
 
 socket.on('room-update', (room) => {
+  room.receivedAt = Date.now(); // 演出で適用が遅れてもキック期限がずれないように
   if (state.isAnimating) { pendingRoomUpdate = room; return; }
   applyRoomUpdate(room);
 });
@@ -896,7 +747,7 @@ socket.on('chat-message', ({ name, message, color }) => {
 
 socket.on('kicked', ({ reason }) => {
   stopCountdown();
-  localStorage.removeItem('sugoroku_token');
+  sessionStorage.removeItem('sugoroku_token');
   showNotification(`⛔ キックされました\n${reason}`, 5000);
   setTimeout(() => location.reload(), 5000);
 });
@@ -1008,7 +859,7 @@ function renderBoard(room) {
 
     // 配置クリック（スタート・ゴールを除く全マス）
     const isStartOrGoal = (node.square === '0' || node.square === String(room.boardSize));
-    const isCardSelected = state.selectedTrapType !== null || room.myForcedTrapType !== null;
+    const isCardSelected = state.selectedTrapType !== null;
     const canPlace = isPlacement && myPlayer && !myPlayer.finished && !isStartOrGoal && isCardSelected;
 
     if (canPlace) {
@@ -1028,14 +879,15 @@ function renderBoard(room) {
 
 function doPlaceTrap(square) {
   if (state.isAnimating) return;
-  const trapType = state.room?.myForcedTrapType || state.selectedTrapType;
+  const trapType = state.selectedTrapType;
   if (!trapType) {
     showError('仕掛けが選択されていません');
     return;
   }
+  const deadline = kickDeadline;
   stopCountdown();
   socket.emit('place-trap', { square, trapType }, ({ error }) => {
-    if (error) { startCountdown(); return showError(error); }
+    if (error) { if (deadline) startCountdown(deadline); return showError(error); }
     SFX.place();
     state.selectedTrapType = null;
     state.selectedTrapIndex = null;
@@ -1098,9 +950,8 @@ async function animateTrapEffect(r, rollerId = state.myId) {
   showTrapReveal(r);
 
   // トラップ発動時の墨しぶきパーティクル演出
-  const currentPos = state.room?.players.find(p => p.id === rollerId)?.position;
-  if (currentPos) {
-    createInkSplash(currentPos);
+  if (r.pos) {
+    createInkSplash(r.pos);
   }
 
   // トークンアニメーション
@@ -1246,7 +1097,7 @@ function renderPlayers(room) {
     const statuses = [];
     if (p.finished) statuses.push(`${p.finishRank}位 🏁`);
     if (p.skipNextTurn) statuses.push('お休み');
-    if (p.halfDice) statuses.push('逆風中');
+    if (p.forcedRollOne) statuses.push('辻風');
 
     const node = layout ? layout.nodes.find(n => n.id === p.position) : null;
     const posLabel = node ? node.label : p.position;
@@ -1456,6 +1307,7 @@ function renderDiceRoll(panel) {
   rollBtn.addEventListener('click', async () => {
     if (state.isAnimating) return;
     state.isAnimating = true;
+    const deadline = kickDeadline;
     stopCountdown();
     rollBtn.disabled = true;
 
@@ -1487,7 +1339,14 @@ function renderDiceRoll(panel) {
     if (error) {
       if (overlay) overlay.classList.add('hidden');
       state.isAnimating = false;
+      rollBtn.disabled = false;
+      if (deadline) startCountdown(deadline);
       showError(error);
+      if (pendingRoomUpdate) {
+        const room = pendingRoomUpdate;
+        pendingRoomUpdate = null;
+        applyRoomUpdate(room);
+      }
       return;
     }
 
@@ -1619,7 +1478,7 @@ function renderFinishScreen(panel, room) {
   }
 
   leaveBtn.addEventListener('click', () => {
-    localStorage.removeItem('sugoroku_token');
+    sessionStorage.removeItem('sugoroku_token');
     location.reload();
   });
   wrap.appendChild(leaveBtn);
@@ -1670,26 +1529,7 @@ function renderWaiting(room) {
   }
 }
 
-// ========= Trap Notifications =========
-function showTrapNotification(r) {
-  const base = r.isRandom ? `❓ ランダム発動！\n→ ` : '';
-  const msgs = {
-    pitfall:      `${base}💀 落とし穴！\n${r.placerName} の罠！\n${r.oldPos} → ${r.newPos} マス目`,
-    blockade:     `${base}🚧 通せんぼ！\n${r.placerName} の罠！\n次のターンお休み`,
-    headwind:     `${base}💨 逆風！\n${r.placerName} の罠！\n次のサイコロが半減`,
-    swap:         `${base}🔄 入れ替え！\n${r.placerName} の罠！\n位置が入れ替わった！`,
-    'swap-fail':  `${base}🔄 入れ替え失敗→落とし穴！\n${r.oldPos} → ${r.newPos} マス目`,
-    redice:       `${base}🎲 サイコロ返し！\n${r.placerName} の罠！\nさらに ${r.penalty} マス戻った！`,
-    chain:        `${base}🔗 連鎖！\n${r.placerName} の罠！\n次の配置フェーズで連鎖を強制配置！`,
-    involveAll:   `${base}🌪️ 全員巻き込み！\n${r.placerName} の罠！\n他の全員が2マス戻る！`,
-    wander:       `${base}🌀 ランダム移動！\n${r.placerName} の罠！\n${r.delta > 0 ? '+' : ''}${r.delta}マス移動 (${r.oldPos}→${r.newPos})`,
-    gather:       `${base}📣 全員集合！\n${r.placerName} の罠！\n全員が ${r.gatherPos}マス目に集結！`,
-    'gather-fail': `${base}📣 全員集合→落とし穴！\n設置者ゴール済みのため\n${r.oldPos} → ${r.newPos} マス目`,
-    fireworks:    `${base}🎆 大筒花火！\n${r.placerName} の罠！\n発動マスと隣接マスの全員を巻き込む！`,
-  };
-  showNotification(msgs[r.type] || '仕掛けが発動！', 3500);
-}
-
+// ========= Notifications =========
 function showNotification(msg, duration = 2500) {
   const el = document.getElementById('notification');
   el.textContent = msg;

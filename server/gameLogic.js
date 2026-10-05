@@ -1,3 +1,5 @@
+const { BOARD_LAYOUTS } = require('../client/boardLayouts');
+
 const VALID_BOARD_SIZES = [15, 20, 30];
 const TRAP_TYPES = ['pitfall', 'blockade', 'headwind', 'swap', 'magnet', 'torrent', 'involveAll', 'gather', 'fireworks', 'random'];
 const TRAP_NAMES = {
@@ -17,133 +19,6 @@ const RANDOM_POOL = TRAP_TYPES.filter(t => t !== 'random');
 
 const rooms = new Map();
 const socketToRoom = new Map();
-
-// ========= Board Layouts =========
-const BOARD_LAYOUTS = {
-  15: {
-    maxNode: 15,
-    nodes: [
-      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
-      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
-      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
-      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
-      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5A', '5B', '5C'] },
-      // Route A (桜 - 6 steps to 11)
-      { id: '5A', label: '5上', row: 0, col: 4, type: 'route-a', next: ['6A'] },
-      { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
-      { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
-      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 1, col: 8, type: 'route-a', next: ['11'] },
-      // Route B (竹 - 5 steps to 11)
-      { id: '5B', label: '5中', row: 1, col: 5, type: 'route-b', next: ['6B'] },
-      { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },
-      { id: '7B', label: '7中', row: 1, col: 7, type: 'route-b', next: ['8B'] },
-      { id: '8B', label: '8中', row: 2, col: 6, type: 'route-b', next: ['11'] },
-      // Route C (藤 - 4 steps to 11)
-      { id: '5C', label: '5下', row: 2, col: 4, type: 'route-c', next: ['6C'] },
-      { id: '6C', label: '6下', row: 2, col: 5, type: 'route-c', next: ['7C'] },
-      { id: '7C', label: '7下', row: 3, col: 6, type: 'route-c', next: ['11'] },
-      // Common End
-      { id: '11', label: '11', row: 2, col: 7, type: 'common', next: ['12'] },
-      { id: '12', label: '12', row: 2, col: 8, type: 'common', next: ['13'] },
-      { id: '13', label: '13', row: 3, col: 8, type: 'common', next: ['14'] },
-      { id: '14', label: '14', row: 3, col: 7, type: 'common', next: ['15'] },
-      { id: '15', label: '終', row: 3, col: 5, type: 'common', next: [] },
-    ]
-  },
-  20: {
-    maxNode: 20,
-    nodes: [
-      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
-      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
-      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
-      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
-      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5'] },
-      { id: '5', label: '5', row: 1, col: 5, type: 'common', next: ['6A', '6B', '6C'] },
-      // Route A (桜 - 8 steps to 13)
-      { id: '6A', label: '6上', row: 0, col: 5, type: 'route-a', next: ['7A'] },
-      { id: '7A', label: '7上', row: 0, col: 6, type: 'route-a', next: ['8A'] },
-      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 0, col: 9, type: 'route-a', next: ['11A'] },
-      { id: '11A', label: '11上', row: 0, col: 10, type: 'route-a', next: ['12A'] },
-      { id: '12A', label: '12上', row: 1, col: 10, type: 'route-a', next: ['13'] },
-      // Route B (竹 - 6 steps to 13)
-      { id: '6B', label: '6中', row: 1, col: 6, type: 'route-b', next: ['7B'] },
-      { id: '7B', label: '7中', row: 1, col: 7, type: 'route-b', next: ['8B'] },
-      { id: '8B', label: '8中', row: 1, col: 8, type: 'route-b', next: ['9B'] },
-      { id: '9B', label: '9中', row: 1, col: 9, type: 'route-b', next: ['10B'] },
-      { id: '10B', label: '10中', row: 2, col: 8, type: 'route-b', next: ['13'] },
-      // Route C (藤 - 5 steps to 13)
-      { id: '6C', label: '6下', row: 2, col: 5, type: 'route-c', next: ['7C'] },
-      { id: '7C', label: '7下', row: 2, col: 6, type: 'route-c', next: ['8C'] },
-      { id: '8C', label: '8下', row: 2, col: 7, type: 'route-c', next: ['9C'] },
-      { id: '9C', label: '9下', row: 3, col: 8, type: 'route-c', next: ['13'] },
-      // Common End
-      { id: '13', label: '13', row: 2, col: 9, type: 'common', next: ['14'] },
-      { id: '14', label: '14', row: 2, col: 10, type: 'common', next: ['15'] },
-      { id: '15', label: '15', row: 3, col: 10, type: 'common', next: ['16'] },
-      { id: '16', label: '16', row: 4, col: 10, type: 'common', next: ['17'] },
-      { id: '17', label: '17', row: 4, col: 9, type: 'common', next: ['18'] },
-      { id: '18', label: '18', row: 4, col: 8, type: 'common', next: ['19'] },
-      { id: '19', label: '19', row: 4, col: 7, type: 'common', next: ['20'] },
-      { id: '20', label: '終', row: 3, col: 7, type: 'common', next: [] },
-    ]
-  },
-  30: {
-    maxNode: 30,
-    nodes: [
-      { id: '0', label: '始', row: 1, col: 0, type: 'common', next: ['1'] },
-      { id: '1', label: '1', row: 1, col: 1, type: 'common', next: ['2'] },
-      { id: '2', label: '2', row: 1, col: 2, type: 'common', next: ['3'] },
-      { id: '3', label: '3', row: 1, col: 3, type: 'common', next: ['4'] },
-      { id: '4', label: '4', row: 1, col: 4, type: 'common', next: ['5'] },
-      { id: '5', label: '5', row: 1, col: 5, type: 'common', next: ['6'] },
-      { id: '6', label: '6', row: 1, col: 6, type: 'common', next: ['7'] },
-      { id: '7', label: '7', row: 1, col: 7, type: 'common', next: ['8A', '8B', '8C'] },
-      // Route A (桜 - 11 steps to 18)
-      { id: '8A', label: '8上', row: 0, col: 7, type: 'route-a', next: ['9A'] },
-      { id: '9A', label: '9上', row: 0, col: 8, type: 'route-a', next: ['10A'] },
-      { id: '10A', label: '10上', row: 0, col: 9, type: 'route-a', next: ['11A'] },
-      { id: '11A', label: '11上', row: 0, col: 10, type: 'route-a', next: ['12A'] },
-      { id: '12A', label: '12上', row: 0, col: 11, type: 'route-a', next: ['13A'] },
-      { id: '13A', label: '13上', row: 1, col: 11, type: 'route-a', next: ['14A'] },
-      { id: '14A', label: '14上', row: 2, col: 11, type: 'route-a', next: ['15A'] },
-      { id: '15A', label: '15上', row: 3, col: 11, type: 'route-a', next: ['16A'] },
-      { id: '16A', label: '16上', row: 4, col: 11, type: 'route-a', next: ['17A'] },
-      { id: '17A', label: '17上', row: 4, col: 10, type: 'route-a', next: ['18'] },
-      // Route B (竹 - 8 steps to 18)
-      { id: '8B', label: '8中', row: 1, col: 8, type: 'route-b', next: ['9B'] },
-      { id: '9B', label: '9中', row: 1, col: 9, type: 'route-b', next: ['10B'] },
-      { id: '10B', label: '10中', row: 1, col: 10, type: 'route-b', next: ['11B'] },
-      { id: '11B', label: '11中', row: 2, col: 10, type: 'route-b', next: ['12B'] },
-      { id: '12B', label: '12中', row: 3, col: 10, type: 'route-b', next: ['13B'] },
-      { id: '13B', label: '13中', row: 3, col: 9, type: 'route-b', next: ['14B'] },
-      { id: '14B', label: '14中', row: 3, col: 8, type: 'route-b', next: ['18'] },
-      // Route C (藤 - 6 steps to 18)
-      { id: '8C', label: '8下', row: 2, col: 7, type: 'route-c', next: ['9C'] },
-      { id: '9C', label: '9下', row: 2, col: 6, type: 'route-c', next: ['10C'] },
-      { id: '10C', label: '10下', row: 3, col: 6, type: 'route-c', next: ['11C'] },
-      { id: '11C', label: '11下', row: 4, col: 6, type: 'route-c', next: ['12C'] },
-      { id: '12C', label: '12下', row: 4, col: 7, type: 'route-c', next: ['18'] },
-      // Common End
-      { id: '18', label: '18', row: 4, col: 8, type: 'common', next: ['19'] },
-      { id: '19', label: '19', row: 4, col: 9, type: 'common', next: ['20'] },
-      { id: '20', label: '20', row: 5, col: 9, type: 'common', next: ['21'] },
-      { id: '21', label: '21', row: 5, col: 8, type: 'common', next: ['22'] },
-      { id: '22', label: '22', row: 5, col: 7, type: 'common', next: ['23'] },
-      { id: '23', label: '23', row: 5, col: 6, type: 'common', next: ['24'] },
-      { id: '24', label: '24', row: 5, col: 5, type: 'common', next: ['25'] },
-      { id: '25', label: '25', row: 5, col: 4, type: 'common', next: ['26'] },
-      { id: '26', label: '26', row: 5, col: 3, type: 'common', next: ['27'] },
-      { id: '27', label: '27', row: 5, col: 2, type: 'common', next: ['28'] },
-      { id: '28', label: '28', row: 5, col: 1, type: 'common', next: ['29'] },
-      { id: '29', label: '29', row: 5, col: 0, type: 'common', next: ['30'] },
-      { id: '30', label: '終', row: 4, col: 0, type: 'common', next: [] },
-    ]
-  }
-};
 
 // ========= Traversal Helpers =========
 function getPrevNodes(nodeId, boardSize) {
@@ -192,6 +67,47 @@ function moveBackward(fromNodeId, steps, preferredBranch, boardSize) {
   return current;
 }
 
+function routeOf(nodeId) {
+  const m = /[ABC]$/.exec(nodeId);
+  return m ? m[0] : null;
+}
+
+// 分岐路に入ったら通った道を記録する（後退時に来た道を戻るため）
+function setPosition(player, nodeId, routeHint) {
+  player.position = nodeId;
+  const route = routeOf(nodeId) || routeHint;
+  if (route) player.lastRoute = route;
+}
+
+function advancePlayer(player, steps, boardSize) {
+  for (let s = 0; s < steps; s++) {
+    const next = moveForward(player.position, 1, player.preferredBranch, boardSize);
+    if (next === player.position) break;
+    setPosition(player, next);
+  }
+}
+
+function retreatPlayer(player, steps, boardSize) {
+  for (let s = 0; s < steps; s++) {
+    const prev = moveBackward(player.position, 1, player.lastRoute || player.preferredBranch, boardSize);
+    if (prev === player.position) break;
+    setPosition(player, prev);
+  }
+}
+
+// 現在の進路設定でゴールまであと何マスか
+function stepsToGoal(player, boardSize) {
+  let current = player.position;
+  let steps = 0;
+  while (true) {
+    const next = moveForward(current, 1, player.preferredBranch, boardSize);
+    if (next === current) break;
+    current = next;
+    steps++;
+  }
+  return steps;
+}
+
 function findPath(fromNodeId, toNodeId, boardSize) {
   const layout = BOARD_LAYOUTS[boardSize];
   if (!layout) return [];
@@ -232,10 +148,6 @@ function getDistance(nodeA, nodeB, boardSize) {
   return path.length > 0 ? path.length - 1 : 999;
 }
 
-function getRandomTrap() {
-  return TRAP_TYPES[Math.floor(Math.random() * TRAP_TYPES.length)];
-}
-
 function getRandomHand(size = 3) {
   const pool = shuffleArray([...TRAP_TYPES]);
   return pool.slice(0, size);
@@ -272,6 +184,7 @@ function createPlayer(id, name, colorIndex) {
     finishRank: null,
     hand: getRandomHand(),
     preferredBranch: 'B',
+    lastRoute: null,
   };
 }
 
@@ -279,6 +192,7 @@ function createPlayer(id, name, colorIndex) {
 const VALID_MAX_ROUNDS = [10, 20, 30, 50];
 
 function createRoom(socketId, playerName, boardSize = 20, maxRounds = 20, isPrivate = false) {
+  if (socketToRoom.has(socketId)) return { error: 'すでにルームに参加しています' };
   const size = VALID_BOARD_SIZES.includes(boardSize) ? boardSize : 20;
   const rounds = VALID_MAX_ROUNDS.includes(maxRounds) ? maxRounds : 20;
   const code = generateRoomCode();
@@ -314,6 +228,7 @@ function createRoom(socketId, playerName, boardSize = 20, maxRounds = 20, isPriv
 }
 
 function joinRoom(socketId, roomCode, playerName) {
+  if (socketToRoom.has(socketId)) return { error: 'すでにルームに参加しています' };
   const room = rooms.get(roomCode);
   if (!room) return { error: 'ルームが見つかりません' };
   if (room.status !== 'lobby') return { error: 'ゲームはすでに始まっています' };
@@ -337,6 +252,7 @@ function startGame(roomCode) {
   for (const p of room.players) {
     p.hand = getRandomHand();
     p.preferredBranch = 'B';
+    p.lastRoute = null;
     p.position = '0';
     p.finished = false;
     p.finishRank = null;
@@ -352,7 +268,7 @@ function assignTrapsForRound(room) {
   // 手札制に移行したため、通常のラウンド毎の単一配布は不要ですが、
   // 手札が3枚未満のプレイヤーがあれば補充します。
   for (const p of room.players) {
-    if (p.finished) { p.assignedTrap = null; continue; }
+    if (p.finished) continue;
     while (p.hand.length < 3) {
       const available = TRAP_TYPES.filter(t => !p.hand.includes(t));
       const pool = available.length > 0 ? available : TRAP_TYPES;
@@ -393,16 +309,12 @@ function placeTrap(socketId, square, trapType) {
   if (!player.hand || !player.hand.includes(trapType)) {
     return { error: '指定された仕掛けを手札に持っていません' };
   }
-  const idx = player.hand.indexOf(trapType);
-  if (idx !== -1) {
-    player.hand.splice(idx, 1);
-  }
-  let finalTrapType = trapType;
+  player.hand.splice(player.hand.indexOf(trapType), 1);
 
   if (!room.traps[square]) {
     room.traps[square] = [];
   }
-  room.traps[square].push({ placerId: socketId, trapType: finalTrapType, round: room.round });
+  room.traps[square].push({ placerId: socketId, trapType, round: room.round });
   room.placedThisRound.add(socketId);
   addLog(room, `${player.name} が仕掛けを設置しました`);
   checkAllPlaced(room);
@@ -435,13 +347,14 @@ function rollDice(socketId) {
   if (!player) return { error: 'プレイヤーが見つかりません' };
 
   let diceResult = null;
+  let dicePos = null; // サイコロで止まったマス（仕掛け適用前）
   let skipped = false;
   let trapResults = null;
 
   if (player.skipNextTurn) {
     player.skipNextTurn = false;
     skipped = true;
-    addLog(room, `${player.name} は通せんぼでお休み！`);
+    addLog(room, `${player.name} は関所でお休み！`);
   } else {
     diceResult = Math.floor(Math.random() * 6) + 1;
 
@@ -452,8 +365,9 @@ function rollDice(socketId) {
     }
 
     const oldPosition = player.position;
-    player.position = moveForward(player.position, diceResult, player.preferredBranch, room.boardSize);
-    
+    advancePlayer(player, diceResult, room.boardSize);
+    dicePos = player.position;
+
     const layout = BOARD_LAYOUTS[room.boardSize];
     const oldLabel = layout.nodes.find(n => n.id === oldPosition)?.label || oldPosition;
     const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
@@ -474,7 +388,7 @@ function rollDice(socketId) {
     advanceAction(room);
   }
 
-  return { room, diceResult, skipped, trapResults };
+  return { room, diceResult, dicePos, skipped, trapResults };
 }
 
 // ゴール判定（ゴール済みは完全無敵）
@@ -514,19 +428,9 @@ function checkGameEnd(room) {
 
 // ラウンド上限による強制終了（位置が近い順に順位確定）
 function endGameByRoundLimit(room) {
-  const layout = BOARD_LAYOUTS[room.boardSize];
-  const nodeIndexMap = {};
-  layout.nodes.forEach((n, idx) => {
-    nodeIndexMap[n.id] = idx;
-  });
-
   const unfinished = room.players
     .filter(p => !p.finished)
-    .sort((a, b) => {
-      const idxA = nodeIndexMap[a.position] || 0;
-      const idxB = nodeIndexMap[b.position] || 0;
-      return idxB - idxA;
-    });
+    .sort((a, b) => stepsToGoal(a, room.boardSize) - stepsToGoal(b, room.boardSize));
 
   for (const p of unfinished) {
     p.finished = true;
@@ -552,7 +456,10 @@ function triggerTrapsChain(room, player) {
     const trapIndex = Math.floor(Math.random() * trapsHere.length);
     const trap = trapsHere.splice(trapIndex, 1)[0];
     const result = applyTrap(room, player, trap);
-    if (result) results.push(result);
+    if (result) {
+      result.pos = currentPos; // 発動したマス
+      results.push(result);
+    }
 
     // 位置が変わった場合のみ連鎖継続
     if (player.position !== currentPos) {
@@ -584,7 +491,7 @@ function applyTrap(room, player, trap) {
   switch (actualType) {
     case 'pitfall': {
       const oldPos = player.position;
-      player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
+      retreatPlayer(player, 4, room.boardSize);
       const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
       const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
       addLog(room, `${rp}🕳️ ${placerName} の「落とし穴」発動！ ${player.name} ${oldLabel}→${newLabel}`);
@@ -604,8 +511,9 @@ function applyTrap(room, player, trap) {
       if (placer && !placer.finished && placer.id !== player.id) {
         const playerOldPos = player.position;
         const placerOldPos = placer.position;
-        player.position = placer.position;
-        placer.position = playerOldPos;
+        const playerRoute = player.lastRoute;
+        setPosition(player, placerOldPos, placer.lastRoute);
+        setPosition(placer, playerOldPos, playerRoute);
         const playerOldLabel = layout.nodes.find(n => n.id === playerOldPos)?.label || playerOldPos;
         const placerOldLabel = layout.nodes.find(n => n.id === placerOldPos)?.label || placerOldPos;
         addLog(room, `${rp}👥 ${placerName} の「影武者」発動！ ${player.name}(${playerOldLabel})↔${placerName}(${placerOldLabel})`);
@@ -614,7 +522,7 @@ function applyTrap(room, player, trap) {
           placerId: placer.id, placerOldPos, placerNewPos: placer.position };
       } else {
         const oldPos = player.position;
-        player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
+        retreatPlayer(player, 4, room.boardSize);
         const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
         const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
         addLog(room, `${rp}👥 影武者相手なし→落とし穴！ ${player.name} ${oldLabel}→${newLabel}`);
@@ -637,14 +545,14 @@ function applyTrap(room, player, trap) {
 
       if (nearestOpponent) {
         const oldPos = player.position;
-        player.position = nearestOpponent.position;
+        setPosition(player, nearestOpponent.position, nearestOpponent.lastRoute);
         const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
         const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
         addLog(room, `${rp}🧲 ${placerName} の「引導石」発動！ ${player.name} は最も近い他プレイヤー ${nearestOpponent.name} のマスへ引き寄せられた！ ${oldLabel}→${newLabel}`);
         return { type: actualType, isRandom, oldPos, newPos: player.position, targetPlayerId: nearestOpponent.id, targetPlayerName: nearestOpponent.name, trapName, placerName };
       } else {
         const oldPos = player.position;
-        player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
+        retreatPlayer(player, 4, room.boardSize);
         const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
         const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
         addLog(room, `${rp}🧲 引導石の引き寄せ相手なし→落とし穴！ ${player.name} ${oldLabel}→${newLabel}`);
@@ -653,7 +561,7 @@ function applyTrap(room, player, trap) {
     }
     case 'torrent': {
       const oldPos = player.position;
-      player.position = moveForward(player.position, 3, player.preferredBranch, room.boardSize);
+      advancePlayer(player, 3, room.boardSize);
       const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
       const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
       addLog(room, `${rp}🌊 ${placerName} の「急流」発動！ ${player.name} は急流に乗って 3マス進んだ！ ${oldLabel}→${newLabel}`);
@@ -665,7 +573,7 @@ function applyTrap(room, player, trap) {
       for (const p of room.players) {
         if (p.id !== player.id && !p.finished) {
           const oldP = p.position;
-          p.position = moveBackward(p.position, 2, p.preferredBranch, room.boardSize);
+          retreatPlayer(p, 2, room.boardSize);
           affectedDetails.push({ id: p.id, name: p.name, oldPos: oldP, newPos: p.position });
         }
       }
@@ -680,7 +588,7 @@ function applyTrap(room, player, trap) {
     case 'gather': {
       if (!placer || placer.finished) {
         const oldPos = player.position;
-        player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
+        retreatPlayer(player, 4, room.boardSize);
         const oldLabel = layout.nodes.find(n => n.id === oldPos)?.label || oldPos;
         const newLabel = layout.nodes.find(n => n.id === player.position)?.label || player.position;
         addLog(room, `${rp}📣 呼び子発動→設置者ゴール済みで落とし穴に！ ${player.name} ${oldLabel}→${newLabel}`);
@@ -694,7 +602,7 @@ function applyTrap(room, player, trap) {
           const dist = getDistance(p.position, gatherPos, room.boardSize);
           if (dist > gatherRange) continue;
           const oldP = p.position;
-          p.position = gatherPos;
+          setPosition(p, gatherPos, placer.lastRoute);
           gatheredDetails.push({ id: p.id, name: p.name, oldPos: oldP, newPos: gatherPos });
         }
       }
@@ -728,13 +636,13 @@ function applyTrap(room, player, trap) {
         }
       }
 
-      player.position = moveBackward(player.position, 4, player.preferredBranch, room.boardSize);
+      retreatPlayer(player, 4, room.boardSize);
       
       const affectedDetails = [];
       for (const p of room.players) {
         if (p.id !== player.id && !p.finished && neighbors.has(p.position)) {
           const oldP = p.position;
-          p.position = moveBackward(p.position, 2, p.preferredBranch, room.boardSize);
+          retreatPlayer(p, 2, room.boardSize);
           affectedDetails.push({ id: p.id, name: p.name, oldPos: oldP, newPos: p.position });
         }
       }
@@ -891,7 +799,12 @@ function removePlayer(socketId, kicked = false) {
   }
 
   if (room.status === 'action') {
-    room.actionOrder = room.actionOrder.filter(id => id !== socketId);
+    // 手番済みの人が抜けた場合は、現在の手番がずれないよう詰める
+    const orderIdx = room.actionOrder.indexOf(socketId);
+    if (orderIdx !== -1) {
+      room.actionOrder.splice(orderIdx, 1);
+      if (orderIdx < room.currentActionIndex) room.currentActionIndex--;
+    }
     if (room.currentActionIndex >= room.actionOrder.length) advanceAction(room);
   }
   if (room.status === 'placement') {
@@ -946,7 +859,6 @@ function sanitizeRoom(room, forSocketId) {
       : null,
     myPlacedThisRound: room.placedThisRound.has(forSocketId),
     myHand: myPlayer ? myPlayer.hand : [],
-    myForcedTrapType: null,
     myPreferredRoute: myPlayer ? myPlayer.preferredBranch : 'B',
     waitingForPlacement: room.status === 'placement'
       ? activePlayers.filter(p => !room.placedThisRound.has(p.id)).map(p => p.name)
@@ -968,6 +880,7 @@ function resetRoom(roomCode) {
     p.finishRank = null;
     p.hand = getRandomHand();
     p.preferredBranch = 'B';
+    p.lastRoute = null;
     p.color = PLAYER_COLORS[i % PLAYER_COLORS.length];
   });
 
@@ -1035,5 +948,4 @@ module.exports = {
   getRoomList,
   reconnectPlayer,
   changeRoute,
-  getRoomPlacedSet: (room) => room.placedThisRound,
 };

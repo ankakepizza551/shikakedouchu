@@ -19,7 +19,7 @@
   <meta name="twitter:description" content="罠を仕込みながら進む、読み合いすごろく。最大4人でオンライン対戦！">
   <meta name="twitter:image" content="https://sugoroku-online-satin-wildflower-6921.fly.dev/og.png">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=3.0.0">
+  <link rel="stylesheet" href="style.css?v=2.2.0">
 </head>
 <body>
 
@@ -85,7 +85,7 @@
       </div>
       <div class="lobby-footer">
         <button id="btn-howto" class="btn-info">📜 遊び方</button>
-        <span class="version-badge">v2.1</span>
+        <span class="version-badge">v2.2</span>
         <button id="btn-changelog" class="btn-info">📋 更新情報</button>
       </div>
     </div>
@@ -193,17 +193,18 @@
             <li>誰がどこに仕掛けを置いたかは分かりません</li>
             <li>設置者自身も自分の仕掛けを踏む場合があります</li>
             <li>ラウンド上限に達するとその時点で終了</li>
-            <li>60秒操作がないとキックされます（再接続可）</li>
+            <li>60秒操作がないとキックされます</li>
+            <li>接続が切れても90秒以内なら再接続できます</li>
           </ul>
         </div>
         <div class="howto-section">
           <h3 class="howto-heading">🃏 仕掛けの種類（一部）</h3>
           <ul class="howto-list">
-            <li>💀 落とし穴 — 3マス戻す</li>
-            <li>🚧 通せんぼ — 次ターンお休み</li>
-            <li>🔄 入れ替え — 設置者と位置交換</li>
-            <li>🌪️ 全員巻き込み — 他全員が2マス戻る</li>
-            <li>❓ ランダム — 発動まで効果は謎！</li>
+            <li>🕳️ 落とし穴 — 4マス戻る</li>
+            <li>🚧 関所 — 次のターンお休み</li>
+            <li>👥 影武者 — 設置者と位置を交換</li>
+            <li>🏚️ 大崩れ — 他の全員が2マス戻る</li>
+            <li>❓ 千両箱 — 発動まで効果は謎！</li>
           </ul>
           <p class="howto-note">ゲーム中の「📖 一覧」ボタンで全種類を確認できます。</p>
         </div>
@@ -220,6 +221,15 @@
       </div>
       <div class="info-modal-body">
         <div class="changelog-entry">
+          <div class="changelog-ver">v2.2 <span class="changelog-date">2026年10月</span></div>
+          <ul class="changelog-list">
+            <li>🔧 <strong>進行の不具合修正</strong>：途中退出で手番が飛ぶ、ラウンド上限時の順位がずれる、仕掛け発動時のコマの動きがおかしい問題を修正しました。</li>
+            <li>↩️ <strong>後退は来た道へ</strong>：合流地点より後ろへ戻されるとき、実際に通ってきた街道を戻るようになりました。</li>
+            <li>🔄 <strong>再読み込みでも復帰</strong>：ゲーム中にページを読み込み直しても、90秒以内なら元の席に戻れます。</li>
+            <li>⏱️ <strong>残り時間表示を正確に</strong>：キックまでの残り秒数がサーバーと一致するようになりました。</li>
+          </ul>
+        </div>
+        <div class="changelog-entry">
           <div class="changelog-ver">v2.1 <span class="changelog-date">2026年9月</span></div>
           <ul class="changelog-list">
             <li>🎨 <strong>グラフィック一新</strong>：金・朱の配色をより上品な古美色（アンティークゴールド・深朱漆）に見直し、ロゴ・駒・紋様を作り込みました。</li>
@@ -233,10 +243,11 @@
             <li>🌸 <strong>3つの分岐街道（桜・竹・藤）</strong>：上路・中路・下路の3ルートを道標で選択して進行できるようになりました。</li>
             <li>🃏 <strong>手札3枚制</strong>：常に3枚の手札木札を持ち、好みの罠を選んで設置できます。</li>
             <li>📍 <strong>設置制限の完全解除</strong>：前方6マスの制限が廃止され、スタート・ゴールを除く全マスに配置可能になりました。</li>
+            <li>🪤 <strong>仕掛けを刷新</strong>：江戸風の10種類の仕掛けに入れ替えました。</li>
           </ul>
         </div>
         <div class="changelog-entry">
-          <div class="changelog-ver">v1.0 <span class="changelog-date">2025年5月</span></div>
+          <div class="changelog-ver">v1.0 <span class="changelog-date">2026年5月</span></div>
           <ul class="changelog-list">
             <li>🎉 仕掛け道中 公開開始</li>
             <li>10種類の仕掛けを実装</li>
@@ -274,6 +285,7 @@
   <button id="btn-sound" class="btn-sound" title="サウンドON/OFF">🔊</button>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="game.js"></script>
+  <script src="boardLayouts.js?v=2.2.0"></script>
+  <script src="game.js?v=2.2.0"></script>
 </body>
 </html>

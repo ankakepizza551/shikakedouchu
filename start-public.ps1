@@ -9,7 +9,7 @@ param(
 $existing = netstat -ano | findstr ":3000 " | Select-String "LISTENING"
 if (-not $existing) {
     Write-Host "サーバーを起動中..." -ForegroundColor Cyan
-    Start-Process -FilePath "node" -ArgumentList "server/index.js" -WindowStyle Minimized
+    Start-Process -FilePath "node" -ArgumentList "server/index.js" -WorkingDirectory $PSScriptRoot -WindowStyle Minimized
     Start-Sleep -Seconds 2
     Write-Host "サーバー起動完了 (http://localhost:3000)" -ForegroundColor Green
 } else {
