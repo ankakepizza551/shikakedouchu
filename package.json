@@ -19,5 +19,10 @@
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
     "socket.io-client": "^4.8.4"
+  },
+  "overrides": {
+    "@flydotio/dockerfile": {
+      "diff": "^8.0.4"
+    }
   }
 }
